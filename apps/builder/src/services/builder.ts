@@ -1,7 +1,8 @@
-import { prisma } from '@repo/database';
-import fs from 'fs-extra';
-import path from 'path';
-import { env } from '../config/env';
+import { prisma } from "@repo/database";
+import fs from "fs-extra";
+import path from "path";
+import { env } from "../config/env";
+import { HugoTransformer } from "../lib/transformer";
 
 export class BuilderService {
   static async build(websiteId: string) {
@@ -10,31 +11,33 @@ export class BuilderService {
       include: {
         seo: true,
         template: true,
-        articles: { include: { seo: true, author: true } }
-      }
+        articles: {
+          include: { seo: true, author: true },
+        },
+      },
     });
 
     if (!website) throw new Error(`Website ${websiteId} not found`);
 
-    const dataDir = path.join(env.ROOT_BUILD_PATH, 'data');
-    const contentDir = path.join(env.ROOT_BUILD_PATH, 'content');
+    const websitePath = path.join(env.ROOT_BUILD_PATH, website.domain || website.id);
+    const dataDir = path.join(websitePath, "data");
+    const contentDir = path.join(websitePath, "content");
 
     await fs.ensureDir(dataDir);
     await fs.ensureDir(contentDir);
 
-    await fs.writeJson(path.join(dataDir, 'website.json'), website, { spaces: 2 });
+    await fs.writeJson(path.join(dataDir, "website.json"), website, { spaces: 2 });
 
-    for (const article of website.articles) {
+    const tasks = website.articles.map(async (article) => {
       const fileName = `${article.slug || article.id}.md`;
-      const frontmatter = {
-        title: article.title,
-        date: article.publishedAt,
-        author: article.author?.name,
-        description: article.seo?.metaDescription,
-      };
+      const filePath = path.join(contentDir, fileName);
 
-      const content = `---\n${JSON.stringify(frontmatter, null, 2)}\n---\n\n${article.content || ''}`;
-      await fs.writeFile(path.join(contentDir, fileName), content);
-    }
+      const frontmatter = HugoTransformer.toFrontmatter(article as any);
+      const fullContent = HugoTransformer.formatMarkdown(frontmatter, article.content);
+
+      return fs.writeFile(filePath, fullContent);
+    });
+
+    await Promise.all(tasks);
   }
 }
