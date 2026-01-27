@@ -1,0 +1,17 @@
+{
+  "name": "web-automation",
+  "private": true,
+  "packageManager": "pnpm@10.11.0", 
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:client": "turbo run dev --filter client",
+    "dev:builder": "turbo run dev --filter builder",
+    "build": "turbo run build",
+    "db:gen": "pnpm --filter @repo/database gen",
+    "clean": "rm -rf node_modules **/node_modules pnpm-lock.yaml && pnpm install"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "typescript": "^5.0.0"
+  }
+}

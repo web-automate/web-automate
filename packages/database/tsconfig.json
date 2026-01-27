@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "es2015",
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "index.ts",
+    "generated/prisma/index.d.ts",
+    "prisma/seed.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

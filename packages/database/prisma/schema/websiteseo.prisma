@@ -1,0 +1,31 @@
+model WebsiteSeo {
+  id              String   @id @default(cuid())
+  
+  // Basic SEO
+  title           String?
+  description     String?  @db.Text
+  keywords        String?  // Disimpan sebagai string koma (comma-separated)
+  author          String?
+  robots          String?  @default("index, follow")
+  canonicalUrl    String?  // Untuk link rel="canonical"
+  
+  // Open Graph (Facebook, LinkedIn)
+  ogTitle         String?
+  ogDescription   String?  @db.Text
+  ogImage         String?
+  ogUrl           String?
+  ogType          String?  @default("website")
+  
+  // Twitter Cards
+  twitterCard     String?  @default("summary_large_image")
+  twitterTitle    String?
+  twitterDescription String? @db.Text
+  twitterImage    String?
+  twitterHandle   String?  // Misal: @username
+
+  // Relation to Website
+  websiteId       String   @unique
+  website         Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  @@map("website_seo")
+}

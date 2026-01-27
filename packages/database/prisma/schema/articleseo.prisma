@@ -1,0 +1,40 @@
+model ArticleSeo {
+  id              String       @id @default(cuid())
+  
+  // --- Primary Meta Tags ---
+  metaTitle       String?      // <meta name="title">
+  metaDescription String?      @db.Text
+  keywords        String[]     // PostgreSQL array support
+  author          String?      // <meta name="author">
+  language        String?      @default("English")
+  robots          RobotsValue  @default(index_follow)
+  canonicalUrl    String?      // <link rel="canonical">
+
+  // --- Open Graph / Facebook ---
+  ogTitle         String?
+  ogDescription   String?      @db.Text
+  ogImage         String?
+  ogUrl           String?
+  ogSiteName      String?      // <meta property="og:site_name">
+  ogType          OgType       @default(article)
+  ogPublishedTime DateTime?    // <meta property="article:published_time">
+  ogAuthor        String?      // <meta property="article:author">
+
+  // --- Twitter Cards ---
+  twitterCard     TwitterCard  @default(summary_large_image)
+  twitterTitle    String?
+  twitterDescription String?   @db.Text
+  twitterImage    String?
+  twitterCreator  String?      // <meta name="twitter:creator"> (e.g., @username)
+  twitterUrl      String?
+
+  // --- Structured Data (JSON-LD) ---
+  /// Digunakan untuk menyimpan skema Article dari schema.org
+  structuredData  Json?        
+
+  // --- Relations ---
+  articleId       String       @unique
+  article         Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@map("article_seo")
+}

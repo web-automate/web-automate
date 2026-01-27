@@ -1,0 +1,45 @@
+enum Role {
+  USER
+  ADMIN
+  EDITOR
+}
+
+enum WebsiteStatus {
+  PUBLISHED
+  DRAFT
+  MAINTENANCE
+}
+
+enum ArticleStatus {
+  INITIAL
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  BUILDING
+  FAILED
+  WAITING_IMAGE
+  QUEUED
+}
+
+enum TwitterCard {
+  summary
+  summary_large_image
+  app
+  player
+}
+
+enum RobotsValue {
+  index_follow      @map("index, follow")
+  noindex_follow    @map("noindex, follow")
+  index_nofollow    @map("index, nofollow")
+  noindex_nofollow  @map("noindex, nofollow")
+}
+
+enum OgType {
+  website
+  article
+  profile
+  book
+  video_movie
+  video_episode
+}

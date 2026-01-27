@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "es2022",
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@repo/database": ["../../packages/database/index.ts"]
+    }
+  },
+  "include": [
+    "index.ts",
+    "../../packages/database/index.ts",
+    "../../packages/database/generated/prisma/index.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

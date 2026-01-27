@@ -1,0 +1,10 @@
+model Template {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  thumbnail     String?
+  defaultConfig Json?
+  websites      Website[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
