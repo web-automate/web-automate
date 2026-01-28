@@ -8,18 +8,41 @@ type ArticleWithRelations = Article & {
 export const HugoTransformer = {
   toFrontmatter(article: ArticleWithRelations) {
     return {
+      id: article.id,
       title: article.title || article.topic,
       date: article.publishedAt || article.createdAt,
-      author: article.author?.name || "Admin",
-      image: article.featuredImage,
-      description: article.excerpt || article.seo?.metaDescription,
+      authorId: article.author?.id || "123",
+      featuredImage: article.featuredImage,
+      description: article.excerpt,
       slug: article.slug,
       categories: [article.category],
+      subcategories: article.subCategory,
       tags: article.keywords,
-      meta_title: article.seo?.metaTitle,
-      robots: article.seo?.robots,
-      canonical: article.seo?.canonicalUrl,
-    };
+      seo: {
+        keywords: article.keywords,
+        metaTitle: article.seo?.metaTitle,
+        metaDescription: article.seo?.metaDescription,
+        author: article.seo?.author,
+        language: article.seo?.language,
+        robots: article.seo?.robots,
+        canonicalUrl: article.seo?.canonicalUrl,
+        ogTitle: article.seo?.ogTitle,
+        ogDescription: article.seo?.ogDescription,
+        ogImage: article.seo?.ogImage,
+        ogUrl: article.seo?.ogUrl,
+        ogSiteName: article.seo?.ogSiteName,
+        ogType: article.seo?.ogType,
+        ogPublishedTime: article.seo?.ogPublishedTime,
+        ogAuthor: article.seo?.ogAuthor,
+        twitterCard: article.seo?.twitterCard,
+        twitterTitle: article.seo?.twitterTitle,
+        twitterDescription: article.seo?.twitterDescription,
+        twitterImage: article.seo?.twitterImage,
+        twitterCreator: article.seo?.twitterCreator,
+        twitterUrl: article.seo?.twitterUrl,
+        structuredData: article.seo?.structuredData,
+      }
+    }
   },
 
   formatMarkdown(frontmatter: object, content: string | null) {

@@ -220,6 +220,48 @@ enum OgType {
 }
 
 //
+// pages.prisma
+//
+
+model StaticPage {
+  id      String @id @default(cuid())
+  title   String
+  slug    String // misal: "privacy-policy"
+  content String @db.Text
+
+  // Relations
+  websiteId String
+  website   Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  // SEO Relation (1-to-1)
+  seo StaticPageSeo?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([websiteId, slug]) // Mencegah slug ganda di website yang sama
+  @@index([websiteId])
+}
+
+//
+// pagesSeo.prisma
+//
+
+model StaticPageSeo {
+  id           String  @id @default(cuid())
+  title        String? // Meta title (jika beda dengan title page)
+  description  String? @db.Text
+  keywords     String?
+  ogImage      String?
+  canonicalUrl String?
+  noIndex      Boolean @default(false)
+
+  // Relation
+  staticPageId String     @unique
+  staticPage   StaticPage @relation(fields: [staticPageId], references: [id], onDelete: Cascade)
+}
+
+//
 // session.prisma
 //
 
@@ -316,8 +358,9 @@ model Website {
   status            WebsiteStatus @default(DRAFT)
 
   // Relations
-  articles Article[]
-  authors  Author[]
+  articles    Article[]
+  authors     Author[]
+  staticPages StaticPage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

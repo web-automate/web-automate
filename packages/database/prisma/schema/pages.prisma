@@ -1,0 +1,19 @@
+model StaticPage {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   // misal: "privacy-policy"
+  content   String   @db.Text
+  
+  // Relations
+  websiteId String
+  website   Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  
+  // SEO Relation (1-to-1)
+  seo       StaticPageSeo?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([websiteId, slug]) // Mencegah slug ganda di website yang sama
+  @@index([websiteId])
+}

@@ -1,0 +1,13 @@
+model StaticPageSeo {
+  id              String     @id @default(cuid())
+  title           String?    // Meta title (jika beda dengan title page)
+  description     String?    @db.Text
+  keywords        String?
+  ogImage         String?
+  canonicalUrl    String?
+  noIndex         Boolean    @default(false)
+
+  // Relation
+  staticPageId    String     @unique
+  staticPage      StaticPage @relation(fields: [staticPageId], references: [id], onDelete: Cascade)
+}

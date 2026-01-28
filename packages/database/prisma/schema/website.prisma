@@ -21,6 +21,7 @@ model Website {
   // Relations
   articles          Article[]
   authors           Author[]
+  staticPages       StaticPage[]
   
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt

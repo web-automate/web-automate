@@ -2,6 +2,11 @@ import { env } from '../config/env';
 import { getRabbitMQ } from '../lib/rabbitmq';
 import { BuilderService } from '../services/builder';
 
+interface BuildPayload {
+  websiteId: string;
+  mode: "build" | "update";
+}
+
 export async function startBuildWorker() {
   const { channel } = await getRabbitMQ();
   
@@ -14,16 +19,21 @@ export async function startBuildWorker() {
     if (!msg) return;
 
     try {
-      const { websiteId } = JSON.parse(msg.content.toString());
-      console.log(`[!] Processing build: ${websiteId}`);
+      const payload: BuildPayload = JSON.parse(msg.content.toString());
+      const { websiteId, mode } = payload;
+
+      const validMode = mode === "update" ? "update" : "build";
+
+      console.log(`[!] Processing ${validMode.toUpperCase()}: ${websiteId}`);
       
-      await BuilderService.build(websiteId);
+      await BuilderService.build(websiteId, validMode);
       
       channel.ack(msg);
-      console.log(`[v] Done: ${websiteId}`);
+      console.log(`[v] Successfully ${validMode}ed: ${websiteId}`);
     } catch (err) {
       console.error("[x] Worker Error:", err);
-      channel.nack(msg, false, false);
+      
+      channel.nack(msg, false, false); 
     }
   });
 }
