@@ -28,17 +28,21 @@ export const useClientApi = () => {
       return useMutation<TData, Error, TVariables>({
         mutationFn: (variables: any) => {
           let finalUrl = url;
+          let requestBody = variables;
+
+          const id = typeof variables === 'string' ? variables : variables?.id;
+
+          if (id && !url.includes(id)) {
+            finalUrl = `${url.replace(/\/$/, '')}/${id}`;
+          }
 
           if (config.method === 'DELETE') {
-            const id = typeof variables === 'string' ? variables : variables?.id;
-            if (id) {
-              finalUrl = `${url}/${id}`;
-            }
+            requestBody = undefined;
           }
 
           return fetcher(finalUrl, {
             method: config.method,
-            body: config.method === 'DELETE' ? undefined : variables,
+            body: requestBody,
             headers: config.headers
           });
         },

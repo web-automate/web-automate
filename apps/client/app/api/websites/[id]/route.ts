@@ -1,5 +1,7 @@
+import { auth } from "@/lib/auth";
 import { RabbitMQService } from "@/lib/services/rabbitmq/producer";
-import { BuildTypeWebsitePayload, prisma } from "@repo/database";
+import { BuildTypeWebsitePayload, prisma, WebsiteStatus } from "@repo/database";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 
@@ -100,22 +102,67 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: websiteId } = await params;
-
-    const website = await prisma.website.delete({
-      where: {
-        id: websiteId,
-      },
+    const session = await auth.api.getSession({
+      headers: await headers(),
     });
 
-    if (website) {
-      return NextResponse.json(website);
-    } else {
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { id: websiteId } = await params;
+
+    const website = await prisma.website.update({
+      where: {
+        id: websiteId,
+        ownerId: session.user.id,
+      },
+      data: {
+        status: WebsiteStatus.MAINTENANCE
+      }
+    });
+
+    if (!website) {
       return NextResponse.json(
-        { error: "Website tidak ditemukan" },
+        { error: "Website tidak ditemukan atau Anda tidak memiliki akses" },
         { status: 404 }
       );
     }
+
+    const payload = {
+      websiteId: website.id,
+    };
+
+    try {
+      await RabbitMQService.sendToQueue("delete_website", payload);
+      console.log(`[QUEUE] Website ${website.id} queued for deletion.`);
+      
+      await prisma.websiteLog.create({
+        data: {
+          websiteId: website.id,
+          status: WebsiteStatus.MAINTENANCE,
+          message: "Deletion request received. Cleaning up infrastructure..."
+        }
+      });
+
+    } catch (queueError) {
+      console.error("[QUEUE_ERROR]", queueError);
+      await prisma.website.update({
+        where: { id: websiteId },
+        data: { status: WebsiteStatus.FAILED }
+      });
+      
+      return NextResponse.json(
+        { error: "Gagal menjadwalkan penghapusan ke antrean" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ 
+      message: "Penghapusan sedang diproses di latar belakang",
+      id: website.id 
+    });
+
   } catch (error) {
     console.error("[WEBSITE_DELETE_POST]", error);
     return NextResponse.json(

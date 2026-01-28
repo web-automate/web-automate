@@ -22,6 +22,7 @@ model Website {
   articles          Article[]
   authors           Author[]
   staticPages       StaticPage[]
+  logs              WebsiteLog[]
   
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt

@@ -1,6 +1,7 @@
 import WebsitePageClient from "./page.client";
 
 const WebsitePage = () => {
-    return <WebsitePageClient />;
+    const ipServer = process.env.IP_SERVER;
+    return <WebsitePageClient ipServer={ipServer} />;
 }
 export default WebsitePage;

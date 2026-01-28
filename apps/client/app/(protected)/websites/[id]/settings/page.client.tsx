@@ -3,12 +3,19 @@
 import { notify } from "@/app/components/notifications";
 import { useClientApi } from "@/lib/hooks/client.api";
 import { Stack } from "@mantine/core";
+import { Website, WebsiteStatus } from "@repo/database";
 import { useRouter } from "next/navigation";
 import DeleteForm from "./components/forms/delete";
+import { StatusWebsiteForm } from "./components/forms/status";
 
 const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
     const api = useClientApi();
     const { push } = useRouter();
+
+    const { data: website, isLoading } = api.Get<Website>(
+        `/api/websites/${websiteId}`,
+        ['websites', websiteId],
+      );
 
     const { mutate, isPending } = api.Mutate(
         `/api/websites/`,
@@ -25,11 +32,40 @@ const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
         }
     );
 
+    const { mutate: mutateStatus } = api.Mutate(
+        `/api/websites/`,
+        { method: "POST" },
+        {
+            onSuccess: () => {
+                notify.success("Website status updated");
+            },
+            onError: () => {
+                notify.error("Failed to update website status");
+            },
+            invalidateKeys: [['websites', websiteId]]
+        }
+    );
+
     const handleDelete = () => {
         mutate(websiteId);
     };
+
+    const handleStatusChange = (status: WebsiteStatus) => {
+        mutateStatus({
+            id: websiteId,
+            status,
+        });
+    };
+
+    console.log(website?.status);
     return (
         <Stack>
+            <StatusWebsiteForm 
+                websiteId={websiteId} 
+                onStatusChange={handleStatusChange} 
+                isPending={isPending} 
+                currentStatus={website?.status}
+            />
             <DeleteForm 
                 websiteId={websiteId} 
                 onDelete={handleDelete} 

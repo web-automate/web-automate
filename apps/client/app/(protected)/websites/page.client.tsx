@@ -14,10 +14,8 @@ import {
     Flex,
     Group,
     Loader,
-    Select,
     Stack,
     Text,
-    TextInput,
     Transition,
     em,
     rem
@@ -29,9 +27,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import NotFoundData from "../components/data.404";
 import { PageHeader } from "../components/header";
-import { ModularModal } from "../components/modal";
+import { AddWebsiteModal } from "./components/addwebsite.modal";
 
-const WebsitePageClient = () => {
+const WebsitePageClient = ({ ipServer }: { ipServer?: string }) => {
     const { push } = useRouter();
     const queryClient = useQueryClient();
     const [isAddWebsiteModalOpen, { open: openAddWebsiteModal, close: closeAddWebsiteModal }] = useDisclosure(false);
@@ -196,53 +194,15 @@ const WebsitePageClient = () => {
                 </Transition>
             </Affix>
 
-            <ModularModal
+            <AddWebsiteModal 
+                ipServer={ipServer}
                 opened={isAddWebsiteModalOpen}
-                onClose={() => {
-                    closeAddWebsiteModal();
-                    resetForm();
-                }}
-                title="Create New Website"
-                description="Fill in the details below to create a new website project."
-                submitLabel="Create Website"
-                onSubmit={handleAddWebsite}
-                isLoading={isCreating}
-            >
-                <Stack gap="md">
-                    <TextInput
-                        label="Website Name"
-                        placeholder="My Awesome Site"
-                        description="Project name for internal identification."
-                        withAsterisk
-                        data-autofocus
-                        value={formState.name}
-                        onChange={(e) => setFormState({ ...formState, name: e.currentTarget.value })}
-                    />
-
-                    <TextInput
-                        label="Domain / Subdomain"
-                        placeholder="mysite"
-                        description="Domain or subdomain for website access."
-                        withAsterisk
-                        rightSection={<Text size="xs" c="dimmed" mr="md">.com</Text>}
-                        value={formState.domain}
-                        onChange={(e) => setFormState({ ...formState, domain: e.currentTarget.value })}
-                    />
-
-                    <Select
-                        label="Choose Template"
-                        placeholder="Choose one"
-                        data={templates?.map((template) => ({
-                            value: template.id,
-                            label: template.name,
-                        })) || []}
-                        disabled={isLoadingTemplates || isErrorTemplates}
-                        withAsterisk
-                        value={formState.templateId}
-                        onChange={(val) => setFormState({ ...formState, templateId: val || "" })}
-                    />
-                </Stack>
-            </ModularModal>
+                onClose={closeAddWebsiteModal}
+                templates={templates || []}
+                isLoadingTemplates={isLoadingTemplates}
+                isCreating={isCreating}
+                onSubmit={(values) => createWebsite(values)}
+            />
         </Stack>
     );
 }

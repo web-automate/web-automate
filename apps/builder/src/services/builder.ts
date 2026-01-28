@@ -1,4 +1,4 @@
-import { Author, BuildTypeWebsitePayload, prisma, StaticPage, StaticPageSeo, Template, Website, WebsiteSeo } from "@repo/database";
+import { Author, BuildTypeWebsitePayload, prisma, StaticPage, StaticPageSeo, Template, Website, WebsiteSeo, WebsiteStatus } from "@repo/database";
 import { exec } from "child_process";
 import fs from "fs-extra";
 import path from "path";
@@ -33,6 +33,26 @@ export class BuilderService {
     };
   }
 
+  private static async notifyWebhook(websiteId: string, status: WebsiteStatus, message: string, error?: any) {
+    try {
+        await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/webhook/builder`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "x-api-key": env.API_KEY || ""
+            },
+            body: JSON.stringify({
+                websiteId,
+                status, // 'BUILDING', 'SUCCESS', 'FAILED'
+                message,
+                details: error ? error.message : undefined
+            }),
+        });
+    } catch (e) {
+        console.error("Failed to send webhook notification:", e);
+    }
+}
+
   static async build(websiteId: string, mode: BuildTypeWebsitePayload) {
     const website = await prisma.website.findUnique({
       where: { id: websiteId },
@@ -51,23 +71,35 @@ export class BuilderService {
     const paths = this.getPaths(domain);
 
     try {
-      await fs.remove(paths.tempDir);
+        // Mulai Building
+        await this.notifyWebhook(websiteId, 'BUILDING', 'Preparing data and directory...');
+        
+        await fs.remove(paths.tempDir);
+        await this.prepareData(paths.tempDir, website as WebsiteWithRelations);
+        
+        // Tahap Hugo
+        await this.notifyWebhook(websiteId, 'BUILDING', 'Running Hugo generation...');
+        await fs.writeFile(path.join(paths.tempDir, "hugo.toml"), `title = "${website.name}"\npublishDir = "html"`);
+        await this.runHugoBuild(paths.tempDir);
 
-      await this.prepareData(paths.tempDir, website as WebsiteWithRelations);
+        // Tahap Deploy
+        await this.notifyWebhook(websiteId, 'BUILDING', 'Deploying to public directory...');
+        await this.deployAndCleanup(paths.hugoOutputDir, paths.publicDir, paths.tempDir);
 
-      await fs.writeFile(path.join(paths.tempDir, "hugo.toml"), `title = "${website.name}"\npublishDir = "html"`);
+        // Tahap Nginx
+        await this.notifyWebhook(websiteId, 'BUILDING', 'Configuring Nginx...');
+        await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath, paths.nginxEnabledPath);
 
-      await this.runHugoBuild(paths.tempDir);
+        // Final Success
+        await this.notifyWebhook(websiteId, 'SUCCESS', 'Website built and deployed successfully.');
+        console.log(`[${mode.toUpperCase()}] Success: ${domain}`);
 
-      await this.deployAndCleanup(paths.hugoOutputDir, paths.publicDir, paths.tempDir);
-
-      await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath, paths.nginxEnabledPath);
-
-      console.log(`[${mode.toUpperCase()}] Success: ${domain}`);
     } catch (error) {
-      console.error(`[${mode.toUpperCase()}] Failed:`, error);
-      if (process.env.NODE_ENV === 'production') await fs.remove(paths.tempDir);
-      throw error;
+        // Error Notification
+        await this.notifyWebhook(websiteId, 'FAILED', 'Build process failed.', error);
+        console.error(`[${mode.toUpperCase()}] Failed:`, error);
+        if (process.env.NODE_ENV === 'production') await fs.remove(paths.tempDir);
+        throw error;
     }
   }
 

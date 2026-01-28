@@ -1,15 +1,13 @@
 'use client';
 
-import { 
-    Modal, 
-    Stack, 
-    Title, 
-    Text, 
-    Group, 
-    Button, 
-    Box, 
-    rem, 
-    ScrollArea 
+import {
+    Box,
+    Button,
+    Group,
+    Modal,
+    ScrollArea,
+    Text,
+    Title
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { ReactNode } from "react";
@@ -24,6 +22,7 @@ interface ModularModalProps {
     cancelLabel?: string;
     onSubmit?: () => void;
     isLoading?: boolean;
+    isDisabled?: boolean;
     size?: string | number;
     withFooter?: boolean;
 }
@@ -38,6 +37,7 @@ export function ModularModal({
     cancelLabel = "Cancel",
     onSubmit,
     isLoading = false,
+    isDisabled = false,
     size = "md",
     withFooter = true
 }: ModularModalProps) {
@@ -85,7 +85,7 @@ export function ModularModal({
                         <Button variant="default" onClick={onClose} disabled={isLoading}>
                             {cancelLabel}
                         </Button>
-                        <Button onClick={onSubmit} loading={isLoading}>
+                        <Button onClick={onSubmit} loading={isLoading} disabled={isDisabled}>
                             {submitLabel}
                         </Button>
                     </Group>

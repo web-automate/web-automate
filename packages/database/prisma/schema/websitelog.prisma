@@ -1,0 +1,21 @@
+model WebsiteLog {
+  id        String   @id @default(cuid())
+  
+  // Status saat log dicatat (mengambil dari WebsiteStatus enum)
+  status    WebsiteStatus
+  
+  // Pesan deskriptif (contoh: "Running Hugo generation...")
+  message   String
+  
+  // Detail teknis atau stack trace jika terjadi error
+  details   String?  @db.Text
+
+  // Relations
+  websiteId String
+  website   Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([websiteId])
+  @@map("website_logs")
+}
