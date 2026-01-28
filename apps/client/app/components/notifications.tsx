@@ -52,7 +52,7 @@ export const showNotification = ({
     autoClose,
     withCloseButton,
     withBorder: false,
-    position: 'top-right',
+    position: 'top-center',
     styles: (theme) => ({
       root: {
         backgroundColor: theme.white,

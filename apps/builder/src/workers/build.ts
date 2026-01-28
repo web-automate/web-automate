@@ -1,10 +1,11 @@
+import { BuildTypeWebsitePayload } from '@repo/database';
 import { env } from '../config/env';
 import { getRabbitMQ } from '../lib/rabbitmq';
 import { BuilderService } from '../services/builder';
 
-interface BuildPayload {
+export interface BuildPayload {
   websiteId: string;
-  mode: "build" | "update";
+  mode: BuildTypeWebsitePayload;
 }
 
 export async function startBuildWorker() {
@@ -22,7 +23,7 @@ export async function startBuildWorker() {
       const payload: BuildPayload = JSON.parse(msg.content.toString());
       const { websiteId, mode } = payload;
 
-      const validMode = mode === "update" ? "update" : "build";
+      const validMode = mode === BuildTypeWebsitePayload.INIT_WEBSITE ? BuildTypeWebsitePayload.INIT_WEBSITE : BuildTypeWebsitePayload.BUILD_WEBSITE;
 
       console.log(`[!] Processing ${validMode.toUpperCase()}: ${websiteId}`);
       

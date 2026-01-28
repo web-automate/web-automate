@@ -2,8 +2,7 @@
 
 import LoaderComponent from "@/app/components/loader";
 import { notify } from "@/app/components/notifications";
-import { getTemplates } from "@/lib/hooks/template";
-import { getWebsiteById } from "@/lib/hooks/use.website";
+import { useClientApi } from "@/lib/hooks/client.api";
 import {
   Affix,
   Button,
@@ -12,10 +11,12 @@ import {
   Stack,
   Transition
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { useMediaQuery } from "@mantine/hooks";
-import { IconFileDescriptionFilled } from "@tabler/icons-react";
-import { notFound, useRouter } from "next/navigation";
-import { useState } from "react";
+import type { BuildTypeWebsitePayload, Template, Website } from "@repo/database";
+import { IconDeviceFloppy } from "@tabler/icons-react";
+import { notFound } from "next/navigation";
+import { useEffect } from "react";
 import AnalyticsForm from "./components/forms/analytics";
 import AssetsForm from "./components/forms/assets";
 import BaseForm from "./components/forms/base";
@@ -26,49 +27,73 @@ interface WebsiteManageClientProps {
   id: string;
 }
 
-
 export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const isMobile = useMediaQuery(`(max-width: ${em(768)})`);
-  const { data: website, isLoading, isError } = getWebsiteById(id);
-  const { data: templates, isLoading: isLoadingTemplates, isError: isErrorTemplates } = getTemplates();
-  if (isLoading) {
-    return (
-      <LoaderComponent />
-    );
-  }
+  const api = useClientApi();
 
-  if (!website) {
-    return notFound();
-  }
+  const { data: website, isLoading } = api.Get<Website>(
+    `/api/websites/${id}`,
+    ['websites', id],
+  );
+
+  const { data: templates, isLoading: isLoadingTemplates } = api.Get<Template[]>(
+    `/api/templates?websiteId=${id}`,
+    ['templates', id],
+  );
+
+  const { mutate, isPending } = api.Mutate(
+    `/api/websites/${id}`,
+    { method: "PATCH" },
+    {
+      onSuccess: () => {
+        notify.success("Website configuration saved and queued for build");
+      },
+      onError: () => {
+        notify.error("Failed to save changes");
+      },
+      invalidateKeys: [['websites', id]]
+    }
+  );
+
+  const form = useForm<Website & { type?: BuildTypeWebsitePayload }>({
+    initialValues: {
+      ...website,
+      type: "BUILD_WEBSITE" as BuildTypeWebsitePayload,
+    } as any,
+  });
+
+  useEffect(() => {
+    if (website) {
+      form.setValues(website);
+      form.resetDirty();
+    }
+  }, [website]);
+
+  if (isLoading) return <LoaderComponent />;
+  if (!website) return notFound();
 
   const handleSave = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      notify.success("Website details saved successfully!");
-    }, 2000);
-  }
+    mutate(form.values);
+  };
 
   return (
     <Stack gap="lg">
-      <BaseForm website={website} />
-      <AssetsForm website={website} />
-      <TemplateForm website={website} templates={templates} />  
-      <AnalyticsForm website={website} />
-      <ThemeConfigForm website={website} />
+      <BaseForm website={form.values} />
+      <AssetsForm website={form.values} />
+      <TemplateForm form={form} templates={templates} />
+      <AnalyticsForm website={form.values} />
+      <ThemeConfigForm form={form} />
 
       <Affix position={{ bottom: isMobile ? 120 : 20, right: 20 }}>
         <Transition transition="slide-up" mounted={true}>
           {(transitionStyles) => (
             <Button
               style={transitionStyles}
-              leftSection={<IconFileDescriptionFilled size={20} />}
+              leftSection={<IconDeviceFloppy size={20} />}
               radius="xl"
               size={isMobile ? "md" : "lg"}
               onClick={handleSave}
-              loading={loading}
+              loading={isPending}
               styles={{
                 root: {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
@@ -78,7 +103,7 @@ export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
                 }
               }}
             >
-              Save
+              Save & Build
             </Button>
           )}
         </Transition>

@@ -1,6 +1,7 @@
 'use client';
 import { authClient, signIn, signUp } from "@/lib/auth.client";
 import { Anchor, Button, Divider, Flex, Group, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { IconBrandGithubFilled, IconBrandGoogleFilled, IconChevronLeft } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -32,8 +33,12 @@ const AuthPageClient = () => {
                 fetchOptions: {
                     onError: (ctx) => {
                         setLoading(false);
-                        alert(ctx.error.message);
-                    }
+                        notifications.show({
+                            message: ctx.error.message,
+                            position: "top-center",
+                            color: "red",
+                        });
+                    },
                 }
             });
         } else {
@@ -44,7 +49,11 @@ const AuthPageClient = () => {
                 fetchOptions: {
                     onError: (ctx) => {
                         setLoading(false);
-                        alert(ctx.error.message);
+                        notifications.show({
+                            message: ctx.error.message,
+                            position: "top-center",
+                            color: "red",
+                        });
                     }
                 }
             });
@@ -56,6 +65,16 @@ const AuthPageClient = () => {
         await signIn.social({
             provider: provider,
             callbackURL: "/dashboard",
+            fetchOptions: {
+                onError: (ctx) => {
+                    setSocialLoading(false);
+                    notifications.show({
+                        message: ctx.error.message,
+                        position: "top-center",
+                        color: "red",
+                    });
+                }
+            }
         });
         setSocialLoading(false);
     };
@@ -142,13 +161,13 @@ const AuthPageClient = () => {
 
             <Flex pt={12} justify={"center"}>
                 <Anchor
-                display={"flex"}
-                ta={"center"}
-                style={{ alignItems: "center" }}
-                onClick={() => push("/")}
-            >
-                <IconChevronLeft size={16} /> <Text size="sm">Back to Home</Text>
-            </Anchor>
+                    display={"flex"}
+                    ta={"center"}
+                    style={{ alignItems: "center" }}
+                    onClick={() => push("/")}
+                >
+                    <IconChevronLeft size={16} /> <Text size="sm">Back to Home</Text>
+                </Anchor>
             </Flex>
         </Stack>
     );

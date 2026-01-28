@@ -1,6 +1,10 @@
 import { connectRabbitMQ } from "@/lib/helpers/rabbitmq";
 
-export const RabbitMQService = {
+export interface RabbitMQService {
+  sendToQueue(queue: string, message: any): Promise<boolean>;
+}
+
+export const RabbitMQService: RabbitMQService = {
   async sendToQueue(queue: string = "build_website", message: any) {
     try {
       const { channel } = await connectRabbitMQ();

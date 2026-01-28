@@ -219,6 +219,11 @@ enum OgType {
   video_episode
 }
 
+enum BuildTypeWebsitePayload {
+  INIT_WEBSITE
+  BUILD_WEBSITE
+}
+
 //
 // pages.prisma
 //

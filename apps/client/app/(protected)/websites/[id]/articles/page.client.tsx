@@ -1,6 +1,7 @@
 'use client';
 
 import LoaderComponent from "@/app/components/loader";
+import { notify } from "@/app/components/notifications";
 import { useClientApi } from "@/lib/hooks/client.api";
 import {
     ActionIcon,
@@ -35,10 +36,10 @@ const getStatusBadgeColor = (status: string) => {
 };
 
 export function ArticlesClient({
-    id,
+    websiteId,
     initialData
 }: {
-    id: string;
+    websiteId: string;
     initialData: Article[]
 }) {
     const api = useClientApi();
@@ -47,8 +48,8 @@ export function ArticlesClient({
     const { push } = useRouter();
 
     const { data: articles, isLoading } = api.Get<Article[]>(
-        `/api/articles?websiteId=${id}`,
-        ['articles', id],
+        `/api/articles?websiteId=${websiteId}`,
+        ['articles', websiteId],
     );
 
     const { mutate, isPending } = api.Mutate(
@@ -56,9 +57,13 @@ export function ArticlesClient({
         { method: "DELETE" },
         {
             onSuccess: () => {
+                notify.success("Article deleted successfully");
                 close();
             },
-            invalidateKeys: [['articles', id]]
+            onError: () => {
+                notify.error("Failed to delete article");
+            },
+            invalidateKeys: [['articles', websiteId]]
         }
     );
 
@@ -100,7 +105,7 @@ export function ArticlesClient({
                         style={{
                             display: article.status !== 'DRAFT' ? 'none' : 'flex'
                         }}
-                        onClick={() => push(`/websites/${id}/articles/${article.id}`)}
+                        onClick={() => push(`/websites/${websiteId}/articles/${article.id}`)}
                     >
                         <IconSettings size={16} />
                     </ActionIcon>
@@ -170,7 +175,7 @@ export function ArticlesClient({
             <AddArticleModal
                 opened={opened}
                 onClose={close}
-                websiteId={id}
+                websiteId={websiteId}
             />
         </Stack>
     );

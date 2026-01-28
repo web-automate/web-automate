@@ -11,17 +11,16 @@ import {
   Text,
   UnstyledButton
 } from "@mantine/core";
-import { Template, Website } from "@repo/database";
+import { UseFormReturnType } from "@mantine/form";
+import { BuildTypeWebsitePayload, Template, Website } from "@repo/database";
 import { IconCheck, IconPalette } from "@tabler/icons-react";
-import { useState } from "react";
 
 interface TemplateFormProps {
-  website: Website;
+  form: UseFormReturnType<Website & { type?: BuildTypeWebsitePayload }>;
   templates?: Template[];
 }
 
-const TemplateForm = ({ website, templates }: TemplateFormProps) => {
-  const [selectedTemplate, setSelectedTemplate] = useState(website.templateId);
+const TemplateForm = ({ form, templates }: TemplateFormProps) => {
 
   if (!templates || templates.length === 0) {
     return null;
@@ -44,12 +43,12 @@ const TemplateForm = ({ website, templates }: TemplateFormProps) => {
           <ScrollArea pt="md" pb="sm">
             <Flex gap="xs">
               {templates.map((template) => {
-                const isSelected = selectedTemplate === template.id;
+                const isSelected = form.values.templateId === template.id;
 
                 return (
                   <UnstyledButton
                     key={template.id}
-                    onClick={() => setSelectedTemplate(template.id)}
+                    onClick={() => form.setFieldValue('templateId', template.id)}
                     style={{
                       position: 'relative',
                       border: isSelected 

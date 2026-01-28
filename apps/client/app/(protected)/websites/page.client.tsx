@@ -3,6 +3,7 @@
 import { notify } from "@/app/components/notifications";
 import { getTemplates } from "@/lib/hooks/template";
 import { useWebsites } from "@/lib/hooks/use.website";
+import { CreateWebsiteInput } from "@/lib/schema/website";
 import {
     ActionIcon,
     Affix,
@@ -38,14 +39,15 @@ const WebsitePageClient = () => {
     const { data: websites, isLoading, isError } = useWebsites();
     const { data: templates, isLoading: isLoadingTemplates, isError: isErrorTemplates } = getTemplates();
 
-    const [formState, setFormState] = useState({
+    const [formState, setFormState] = useState<CreateWebsiteInput>({
         name: "",
         domain: "",
-        templateId: ""
+        templateId: "",
+        type: "INIT_WEBSITE"
     });
 
     const resetForm = () => {
-        setFormState({ name: "", domain: "", templateId: "" });
+        setFormState({ name: "", domain: "", templateId: "", type: "INIT_WEBSITE" });
     };
 
     const { mutate: createWebsite, isPending: isCreating } = useMutation({

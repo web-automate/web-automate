@@ -1,9 +1,10 @@
-import { Author, prisma, StaticPage, StaticPageSeo, Template, Website, WebsiteSeo } from "@repo/database";
+import { Author, BuildTypeWebsitePayload, prisma, StaticPage, StaticPageSeo, Template, Website, WebsiteSeo } from "@repo/database";
 import { exec } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 import { promisify } from "util";
 import { env } from "../config/env";
+import nginxConfig from "../lib/consts/nginx";
 import { ArticleWithRelations, HugoTransformer } from "../lib/transformer";
 
 const execAsync = promisify(exec);
@@ -22,14 +23,17 @@ export interface StaticPageWithRelations extends StaticPage {
 
 export class BuilderService {
   private static getPaths(domain: string) {
+    const root = path.resolve(env.ROOT_BUILD_PATH);
     return {
-      tempDir: path.join(env.ROOT_BUILD_PATH, "temp", domain),
-      publicDir: path.join(env.ROOT_BUILD_PATH, "public", domain),
-      hugoOutputDir: path.join(env.ROOT_BUILD_PATH, "temp", domain, "html"),
+      tempDir: path.join(root, "temp", domain),
+      publicDir: path.join(root, "public", domain),
+      hugoOutputDir: path.join(root, "temp", domain, "html"),
+      nginxConfigPath: path.join(root, "nginx", "available", `${domain}.conf`),
+      nginxEnabledPath: path.join(root, "nginx", "enabled", `${domain}.conf`),
     };
   }
 
-  static async build(websiteId: string, mode: "build" | "update") {
+  static async build(websiteId: string, mode: BuildTypeWebsitePayload) {
     const website = await prisma.website.findUnique({
       where: { id: websiteId },
       include: {
@@ -47,16 +51,22 @@ export class BuilderService {
     const paths = this.getPaths(domain);
 
     try {
+      await fs.remove(paths.tempDir);
+
       await this.prepareData(paths.tempDir, website as WebsiteWithRelations);
+
+      await fs.writeFile(path.join(paths.tempDir, "hugo.toml"), `title = "${website.name}"\npublishDir = "html"`);
 
       await this.runHugoBuild(paths.tempDir);
 
       await this.deployAndCleanup(paths.hugoOutputDir, paths.publicDir, paths.tempDir);
 
+      await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath, paths.nginxEnabledPath);
+
       console.log(`[${mode.toUpperCase()}] Success: ${domain}`);
     } catch (error) {
       console.error(`[${mode.toUpperCase()}] Failed:`, error);
-      await fs.remove(paths.tempDir);
+      if (process.env.NODE_ENV === 'production') await fs.remove(paths.tempDir);
       throw error;
     }
   }
@@ -68,7 +78,7 @@ export class BuilderService {
     await fs.ensureDir(dataDir);
     await fs.ensureDir(contentDir);
 
-    await fs.writeJson(path.join(dataDir, "website.json"), website);
+    await fs.writeJson(path.join(dataDir, "website.json"), website, { spaces: 2 });
 
     const tasks = website.articles.map(async (article: ArticleWithRelations) => {
       const fileName = `${article.slug || article.id}.md`;
@@ -81,14 +91,35 @@ export class BuilderService {
   }
 
   private static async runHugoBuild(workingDir: string) {
-    await execAsync(`hugo -s ${workingDir} -d html`);
+    await execAsync(`hugo -s "${workingDir}" -d html`);
   }
 
   private static async deployAndCleanup(source: string, destination: string, temp: string) {
+    await fs.ensureDir(destination);
     await fs.emptyDir(destination);
-    
-    await fs.copy(source, destination);
+    if (await fs.pathExists(source)) {
+      await fs.copy(source, destination);
+    }
+    if (process.env.NODE_ENV === 'production') await fs.remove(temp);
+  }
 
-    await fs.remove(temp);
+  private static async setupNginx(domain: string, publicDir: string, configPath: string, enabledPath: string) {
+    const config = nginxConfig(domain, publicDir);
+
+    await fs.ensureDir(path.dirname(configPath));
+    await fs.ensureDir(path.dirname(enabledPath));
+
+    await fs.writeFile(configPath, config);
+    
+    if (process.platform === 'win32') {
+      console.log(`[WINDOWS-TEST] Nginx config generated at: ${configPath}`);
+      return;
+    }
+
+    await execAsync(`sudo cp ${configPath} /etc/nginx/sites-available/`);
+    if (!fs.existsSync(enabledPath)) {
+      await execAsync(`sudo ln -s ${configPath} ${enabledPath}`);
+    }
+    await execAsync(`sudo nginx -t && sudo systemctl reload nginx`);
   }
 }

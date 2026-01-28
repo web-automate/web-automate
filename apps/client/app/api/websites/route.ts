@@ -1,9 +1,12 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import createWebsiteSchema from "@/lib/schema/website";
+import { RabbitMQService } from "@/lib/services/rabbitmq/producer";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import z from "zod";
+
+const queueName = process.env.RABBITMQ_QUEUE_NAME || "build_website";
 
 export async function GET() {
     const session = await auth.api.getSession({
@@ -50,7 +53,7 @@ export async function POST(req: Request) {
       return NextResponse.json(z.treeifyError(validation.error), { status: 400 });
     }
 
-    const { name, domain, templateId } = validation.data;
+    const { name, domain, templateId, type } = validation.data;
 
     const existingSite = await prisma.website.findUnique({
       where: { domain },
@@ -68,6 +71,20 @@ export async function POST(req: Request) {
         ownerId: session.user.id,
       },
     });
+
+    if (website) {
+      const build = {
+        websiteId: website.id,
+        action: type,
+      }
+
+      try {
+        await RabbitMQService.sendToQueue(queueName, build);
+        console.log(`[QUEUE] Website ${website.id} queued for building.`);
+      } catch (queueError) {
+        console.error("[QUEUE_ERROR]", queueError);
+      }
+    }
 
     return NextResponse.json(website);
   } catch (error) {

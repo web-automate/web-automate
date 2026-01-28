@@ -1,4 +1,5 @@
-// Helper untuk mengonversi HEX ke HSL
+import chroma from "chroma-js";
+
 const hexToHsl = (hex: string) => {
   let r = 0, g = 0, b = 0;
   if (hex.length === 4) {
@@ -29,7 +30,6 @@ const hexToHsl = (hex: string) => {
   return { h: h * 360, s: s * 100, l: l * 100 };
 };
 
-// Helper untuk mengonversi HSL kembali ke HEX
 const hslToHex = (h: number, s: number, l: number) => {
   l /= 100;
   const a = s * Math.min(l, 1 - l) / 100;
@@ -41,20 +41,19 @@ const hslToHex = (h: number, s: number, l: number) => {
   return `#${f(0)}${f(8)}${f(4)}`;
 };
 
-// Fungsi Utama Color Theory
 const getHarmonyColor = (primaryHex: string, type: string) => {
   const { h, s, l } = hexToHsl(primaryHex);
   let newHue = h;
 
   switch (type) {
     case 'complementary':
-      newHue = (h + 180) % 360; // Berseberangan 180 derajat
+      newHue = (h + 180) % 360; 
       break;
     case 'analogous':
-      newHue = (h + 30) % 360;  // Berdekatan 30 derajat
+      newHue = (h + 30) % 360; 
       break;
     case 'triadic':
-      newHue = (h + 120) % 360; // Membentuk segitiga 120 derajat
+      newHue = (h + 120) % 360;
       break;
     default:
       return primaryHex;
@@ -62,4 +61,24 @@ const getHarmonyColor = (primaryHex: string, type: string) => {
   return hslToHex(newHue, s, l);
 };
 
-export { getHarmonyColor };
+const generateMantinePalette = (baseColor: string) => {
+  const lightnessMap = [
+    0.97, 0.92, 0.86, 0.78, 0.68, 0.58, 0.48, 0.38, 0.28, 0.18, 0.08,
+  ];
+  const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+  const palette: Record<string, string> = {};
+
+  const scale = chroma.scale(["#fff", baseColor, "#000"])
+    .mode("lch") 
+    .domain([0, 0.5, 1]);
+
+  shades.forEach((shade, index) => {
+    palette[shade.toString()] = scale(1 - lightnessMap[index]).hex();
+  });
+
+  return palette;
+};
+
+export { generateMantinePalette, getHarmonyColor };
+

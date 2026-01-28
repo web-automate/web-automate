@@ -29,7 +29,7 @@ export const useClientApi = () => {
         mutationFn: (variables: any) => {
           let finalUrl = url;
 
-          if (config.method === 'PATCH' || config.method === 'DELETE') {
+          if (config.method === 'DELETE') {
             const id = typeof variables === 'string' ? variables : variables?.id;
             if (id) {
               finalUrl = `${url}/${id}`;

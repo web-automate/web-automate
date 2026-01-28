@@ -1,28 +1,40 @@
-import { getHarmonyColor } from "@/lib/helpers/color";
-import { Accordion, Box, ColorPicker, ColorSwatch, Group, Paper, Select, SimpleGrid, Slider, Stack, Text } from "@mantine/core";
-import { Website } from "@repo/database";
+import { generateMantinePalette, getHarmonyColor } from "@/lib/helpers/color";
+import { Accordion, Box, ColorPicker, ColorSwatch, Group, Paper, Select, SimpleGrid, Stack, Text } from "@mantine/core";
+import { UseFormReturnType } from "@mantine/form";
+import type { BuildTypeWebsitePayload, Website } from "@repo/database";
 import { IconCircleCheck, IconPalette } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 
-const ThemeConfigForm = ({ website }: { website: Website }) => {
+interface ThemeProps {
+  form: UseFormReturnType<Website & { type?: BuildTypeWebsitePayload }>;
+}
+
+const ThemeConfigForm = ({ form }: ThemeProps) => {
   const [harmony, setHarmony] = useState<string>("complementary");
   
-  const [config, setConfig] = useState(() => {
-    const saved = (website.themeConfig as any) || {};
-    return {
-      primary: saved.primary || "#228be6",
-      secondary: saved.secondary || "#fab005",
-      primaryShade: saved.primaryShade || 600,
-      secondaryShade: saved.secondaryShade || 600,
-    };
-  });
+  const themeConfig = (form.values?.themeConfig as any) || {
+    primary: generateMantinePalette("#228be6"),
+    secondary: generateMantinePalette("#fab005"),
+  };
+
+  const updatePalette = (key: "primary" | "secondary", baseColor: string) => {
+    const newPalette = generateMantinePalette(baseColor);
+    form.setFieldValue("themeConfig", {
+      ...themeConfig,
+      [key]: newPalette,
+    });
+  };
 
   useEffect(() => {
-    if (harmony !== "custom") {
-      const newSecondary = getHarmonyColor(config.primary, harmony);
-      setConfig(prev => ({ ...prev, secondary: newSecondary }));
+    if (harmony !== "custom" && themeConfig.primary?.["600"]) {
+      const basePrimary = themeConfig.primary["600"];
+      const newSecondaryHex = getHarmonyColor(basePrimary, harmony);
+      
+      if (newSecondaryHex !== themeConfig.secondary?.["600"]) {
+        updatePalette("secondary", newSecondaryHex);
+      }
     }
-  }, [config.primary, harmony]);
+  }, [themeConfig.primary?.["600"], harmony]);
 
   return (
     <Accordion variant="separated" defaultValue="theme-settings">
@@ -30,7 +42,7 @@ const ThemeConfigForm = ({ website }: { website: Website }) => {
         <Accordion.Control icon={<IconPalette size={20} color="var(--mantine-color-blue-6)" />}>
           <Box>
             <Text fw={700} size="lg">Theme Configuration</Text>
-            <Text size="xs" c="dimmed">Atur skema warna dan harmoni visual secara manual atau otomatis</Text>
+            <Text size="xs" c="dimmed">Generasi palet warna 50-950 otomatis untuk website Anda</Text>
           </Box>
         </Accordion.Control>
 
@@ -40,68 +52,63 @@ const ThemeConfigForm = ({ website }: { website: Website }) => {
               label="Color Harmony Strategy"
               value={harmony}
               onChange={(val) => setHarmony(val || "custom")}
+              allowDeselect={false}
               data={[
-                { value: 'complementary', label: 'Complementary (Kontras Tinggi)' },
-                { value: 'analogous', label: 'Analogous (Harmonis/Kalem)' },
-                { value: 'triadic', label: 'Triadic (Variatif)' },
-                { value: 'custom', label: 'Custom (Tentukan Sendiri)' },
+                { value: 'complementary', label: 'Complementary' },
+                { value: 'analogous', label: 'Analogous' },
+                { value: 'triadic', label: 'Triadic' },
+                { value: 'custom', label: 'Custom' },
               ]}
             />
 
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
-              {/* Primary Color Section */}
               <Paper withBorder p="md" radius="md">
-                <Text fw={600} size="sm" mb="md">Primary Color</Text>
+                <Text fw={600} size="sm" mb="md">Primary Palette (Base: 600)</Text>
                 <Stack gap="md">
                   <ColorPicker 
                     fullWidth 
-                    value={config.primary}
-                    onChange={(val) => setConfig({ ...config, primary: val })}
+                    value={themeConfig.primary?.["600"]}
+                    onChange={(val) => updatePalette("primary", val)}
                   />
-                  <Box>
-                    <Text size="xs" fw={500} mb={5}>Contrast Shade (50-950): {config.primaryShade}</Text>
-                    <Slider
-                      min={50} max={950} step={50}
-                      value={config.primaryShade}
-                      onChange={(val) => setConfig({ ...config, primaryShade: val })}
-                      marks={[{ value: 50 }, { value: 500 }, { value: 950 }]}
-                    />
-                  </Box>
+                  <Group gap={4} grow>
+                    {Object.entries(themeConfig.primary || {}).map(([shade, color]) => (
+                      <Box key={shade}>
+                        <ColorSwatch color={color as string} size={14} radius={2} />
+                      </Box>
+                    ))}
+                  </Group>
                 </Stack>
               </Paper>
 
-              {/* Secondary Color Section */}
               <Paper withBorder p="md" radius="md" style={{ opacity: harmony !== "custom" ? 0.9 : 1 }}>
                 <Group justify="space-between" mb="md">
-                  <Text fw={600} size="sm">Secondary Color</Text>
+                  <Text fw={600} size="sm">Secondary Palette</Text>
                   {harmony !== "custom" && <IconCircleCheck size={16} color="green" />}
                 </Group>
                 <Stack gap="md">
                   <ColorPicker 
                     fullWidth 
-                    value={config.secondary}
-                    onChange={(val) => harmony === "custom" && setConfig({ ...config, secondary: val })}
+                    value={themeConfig.secondary?.["600"]}
+                    onChange={(val) => harmony === "custom" && updatePalette("secondary", val)}
                   />
-                  <Box>
-                    <Text size="xs" fw={500} mb={5}>Contrast Shade (50-950): {config.secondaryShade}</Text>
-                    <Slider
-                      min={50} max={950} step={50}
-                      value={config.secondaryShade}
-                      onChange={(val) => setConfig({ ...config, secondaryShade: val })}
-                    />
-                  </Box>
+                  <Group gap={4} grow>
+                    {Object.entries(themeConfig.secondary || {}).map(([shade, color]) => (
+                      <Box key={shade}>
+                        <ColorSwatch color={color as string} size={14} radius={2} />
+                      </Box>
+                    ))}
+                  </Group>
                 </Stack>
               </Paper>
             </SimpleGrid>
 
-            {/* Live Preview Swatch */}
             <Paper p="sm" bg="gray.0" radius="md">
               <Group gap="xs">
-                <Text size="xs" fw={600}>Visual Preview:</Text>
-                <ColorSwatch color={config.primary} size={24} radius="sm" />
-                <ColorSwatch color={config.secondary} size={24} radius="sm" />
+                <Text size="xs" fw={600}>Main Brand Colors:</Text>
+                <ColorSwatch color={themeConfig.primary?.["600"]} size={24} radius="sm" />
+                <ColorSwatch color={themeConfig.secondary?.["600"]} size={24} radius="sm" />
                 <Text size="xs" c="dimmed">
-                  Data ini akan disimpan sebagai config tema untuk website {website.domain}.
+                  Mantine palette terdeteksi untuk domain <strong>{form.values?.domain}</strong>.
                 </Text>
               </Group>
             </Paper>

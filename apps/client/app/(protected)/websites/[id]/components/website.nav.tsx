@@ -1,6 +1,6 @@
 'use client';
 import { rem, ScrollArea, Tabs } from '@mantine/core';
-import { IconArticle, IconFileCode, IconInfoCircle, IconSeo } from '@tabler/icons-react';
+import { IconArticle, IconFileCode, IconInfoCircle, IconSeo, IconSettings } from '@tabler/icons-react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
 export function WebsiteNavigation() {
@@ -8,7 +8,7 @@ export function WebsiteNavigation() {
   const pathname = usePathname();
   const params = useParams();
 
-  const tabs = ['details', 'articles', 'authors', 'pages', 'seo'];
+  const tabs = ['details', 'articles', 'authors', 'pages', 'seo', 'settings'];
   
   const activeTab = tabs.find(tab => pathname.includes(`/${tab}`)) || 'details';
 
@@ -59,6 +59,9 @@ export function WebsiteNavigation() {
           </Tabs.Tab>
           <Tabs.Tab value="seo" leftSection={<IconSeo style={iconStyle} />}>
             SEO
+          </Tabs.Tab>
+          <Tabs.Tab value="settings" leftSection={<IconSettings style={iconStyle} />}>
+            Settings
           </Tabs.Tab>
         </Tabs.List>
       </Tabs>

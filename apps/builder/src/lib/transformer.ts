@@ -1,6 +1,6 @@
 import { Article, ArticleSeo, Author } from "@repo/database";
 
-type ArticleWithRelations = Article & {
+export type ArticleWithRelations = Article & {
   seo: ArticleSeo | null;
   author: Author | null;
 };

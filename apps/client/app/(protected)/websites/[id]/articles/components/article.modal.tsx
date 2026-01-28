@@ -1,6 +1,7 @@
 'use client';
 
 import { ModularModal } from "@/app/(protected)/components/modal";
+import { notify } from "@/app/components/notifications";
 import { useClientApi } from "@/lib/hooks/client.api";
 import { ArticleRequest } from "@/lib/types/api";
 import {
@@ -70,8 +71,12 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
         { method: "POST" },
         {
             onSuccess: () => {
+                notify.success("Article created successfully");
                 form.reset();
                 onClose();
+            },
+            onError: () => {
+                notify.error("Failed to create article");
             },
             invalidateKeys: [['articles', websiteId]]
         }

@@ -36,7 +36,7 @@ export default function WebsiteLayout({
 
     return (
         <Container size="sm">
-            <Stack gap={0}>
+            <Stack gap={0} pb={120}>
                 <Flex gap={"xs"}>
                     <ThemeIcon
                         size={48}

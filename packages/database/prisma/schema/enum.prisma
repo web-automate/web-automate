@@ -43,3 +43,8 @@ enum OgType {
   video_movie
   video_episode
 }
+
+enum BuildTypeWebsitePayload {
+  INIT_WEBSITE
+  BUILD_WEBSITE
+}

@@ -15,7 +15,7 @@ export default async function ArticlesPage({
 
   return (
     <ArticlesClient 
-      id={id} 
+      websiteId={id} 
       initialData={initialData} 
     />
   );
