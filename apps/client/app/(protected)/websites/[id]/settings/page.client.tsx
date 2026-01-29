@@ -33,8 +33,8 @@ const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
     );
 
     const { mutate: mutateStatus } = api.Mutate(
-        `/api/websites/`,
-        { method: "POST" },
+        `/api/websites/${websiteId}`,
+        { method: "PATCH" },
         {
             onSuccess: () => {
                 notify.success("Website status updated");
@@ -52,7 +52,6 @@ const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
 
     const handleStatusChange = (status: WebsiteStatus) => {
         mutateStatus({
-            id: websiteId,
             status,
         });
     };

@@ -68,7 +68,7 @@ export type SuccessImageResponse = {
     message: string;
     data: {
         prompt: string;
-        status: 'pending' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
+        status: 'pending' | 'queued' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
         webhookUrl?: string;
     };
 };
@@ -130,7 +130,7 @@ export type SuccessArticleResponse = {
     success: boolean;
     message: string;
     data: {
-        status: 'pending' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
+        status: 'pending' | 'queued' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
         /**
          * URL Callback
          */
@@ -161,7 +161,7 @@ export type ArticleWebhookResponse = {
          */
         id?: string;
     };
-    status: 'pending' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
+    status: 'pending' | 'queued' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
     /**
      * Metadata tambahan untuk pemrosesan gambar
      */
@@ -258,7 +258,7 @@ export type PostApiArticleGenerateErrors = {
         success: boolean;
         error: string;
         data: {
-            status: 'pending' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
+            status: 'pending' | 'queued' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
         };
     };
 };

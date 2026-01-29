@@ -43,15 +43,13 @@ export function AddWebsiteModal({
     const [verifyStatus, setVerifyStatus] = useState<'idle' | 'loading' | 'success' | 'failed'>('idle');
 
     const form = useForm({
-        initialValues: { name: "", domain: "", templateId: "" },
-        validateInputOnChange: true, // Validasi langsung saat user mengetik
+        initialValues: { name: "", domain: "", templateId: "", language: "id", type: "INIT_WEBSITE" },
+        validateInputOnChange: true,
         validate: {
-            name: (value) => (value.trim().length < 2 ? 'Name is too short' : null),
-            domain: (value) =>
-            (/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}$/.test(value)
-                ? null
-                : 'Invalid domain format (e.g., example.com)'),
-            templateId: (value) => (!value ? 'Please select a template' : null),
+            name: (value) => (!value ? 'Website name is required' : null),
+            domain: (value) => (!value ? 'Domain is required' : null),
+            templateId: (value) => (!value ? 'Template is required' : null),
+            language: (value) => (!value ? 'Language is required' : null),
         },
     });
 
@@ -106,6 +104,17 @@ export function AddWebsiteModal({
                     placeholder="My Awesome Site"
                     required
                     {...form.getInputProps('name')}
+                />
+
+                <Select
+                    data={[
+                        { value: "id", label: "Bahasa Indonesia" },
+                        { value: "en", label: "English" },
+                    ]}
+                    label="Language"
+                    placeholder="Select language"
+                    required
+                    {...form.getInputProps('language')}
                 />
 
                 <Stack gap={4}>

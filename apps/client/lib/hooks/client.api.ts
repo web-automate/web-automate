@@ -1,8 +1,23 @@
-// hooks/use-client-api.ts
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetcher } from "../utils/api";
+
+const buildUrlWithParams = (url: string, params: any) => {
+  const regex = /{([a-zA-Z0-9_-]+)}/g;
+
+  if (typeof params === 'string' || typeof params === 'number') {
+    return url.replace(regex, String(params));
+  }
+
+  if (typeof params === 'object' && params !== null) {
+    return url.replace(regex, (match, key) => {
+      return params[key] !== undefined ? String(params[key]) : match;
+    });
+  }
+
+  return url;
+};
 
 export const useClientApi = () => {
   const queryClient = useQueryClient();
@@ -18,7 +33,7 @@ export const useClientApi = () => {
 
     Mutate: <TData, TVariables>(
       url: string,
-      config: { method: 'POST' | 'PATCH' | 'DELETE'; headers?: Record<string, string> },
+      config: { method: 'POST' | 'PATCH' | 'DELETE' | 'PUT'; headers?: Record<string, string> },
       callbacks?: {
         onSuccess?: (data: TData) => void;
         onError?: (error: any) => void;
@@ -27,23 +42,23 @@ export const useClientApi = () => {
     ) => {
       return useMutation<TData, Error, TVariables>({
         mutationFn: (variables: any) => {
-          let finalUrl = url;
-          let requestBody = variables;
-
-          const id = typeof variables === 'string' ? variables : variables?.id;
-
-          if (id && !url.includes(id)) {
-            finalUrl = `${url.replace(/\/$/, '')}/${id}`;
-          }
+          const finalUrl = buildUrlWithParams(url, variables.id);
+          let requestBody = variables.body;
 
           if (config.method === 'DELETE') {
-            requestBody = undefined;
+            if (typeof variables === 'string' || typeof variables === 'number') {
+              requestBody = undefined;
+            }
           }
 
           return fetcher(finalUrl, {
             method: config.method,
             body: requestBody,
-            headers: config.headers
+            headers: {
+              'Content-Type': 'application/json',
+              ...config.headers,
+              'x-api-key': process.env.API_KEY || '',
+            }
           });
         },
         onSuccess: (data) => {
@@ -54,7 +69,43 @@ export const useClientApi = () => {
           }
           callbacks?.onSuccess?.(data);
         },
-        onError: callbacks?.onError,
+        onError: (error) => {
+          callbacks?.onError?.(error);
+        },
+      });
+    },
+
+    MutateFile: <TData>(
+      url: string,
+      callbacks?: {
+        onSuccess?: (data: TData) => void;
+        onError?: (error: any) => void;
+        invalidateKeys?: any[][];
+      }
+    ) => {
+      return useMutation<TData, Error, { body: FormData; id?: string | Record<string, any> }>({
+        mutationFn: (variables) => {
+          const finalUrl = buildUrlWithParams(url, variables.id);
+
+          return fetcher(finalUrl, {
+            method: 'POST',
+            body: variables.body,
+            headers: {
+              'x-api-key': process.env.API_KEY || '',
+            }
+          });
+        },
+        onSuccess: (data) => {
+          if (callbacks?.invalidateKeys) {
+            callbacks.invalidateKeys.forEach(key =>
+              queryClient.invalidateQueries({ queryKey: key })
+            );
+          }
+          callbacks?.onSuccess?.(data);
+        },
+        onError: (error) => {
+          callbacks?.onError?.(error);
+        },
       });
     }
   };

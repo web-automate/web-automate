@@ -2,6 +2,7 @@
 
 import { ModularModal } from "@/app/(protected)/components/modal";
 import { notify } from "@/app/components/notifications";
+import { TONES } from "@/lib/const/tone";
 import { useClientApi } from "@/lib/hooks/client.api";
 import { ArticleRequest } from "@/lib/types/api";
 import {
@@ -20,7 +21,7 @@ import {
     Tooltip
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Author } from "@repo/database";
+import { Author, Website } from "@repo/database";
 import { IconPencil, IconPhoto, IconSparkles, IconTags, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -46,6 +47,11 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
         `/api/websites/${websiteId}/authors?websiteId=${websiteId}`,
         ['authors', websiteId]
     );
+
+    const { data: website, isLoading: isLoadingWebsite } = api.Get<Website>(
+        `/api/websites/${websiteId}`,
+        ['websites', websiteId],
+      );
 
     const form = useForm<ArticleModalFormValues>({
         initialValues: {
@@ -87,7 +93,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
             ...values,
             imageCount: withImage ? values.imageCount : 0
         };
-        mutate(payload);
+        mutate({body: payload});
     };
 
     const handleAiGenerate = async (type: 'topic' | 'keywords') => {
@@ -98,7 +104,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
         try {
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
-                body: JSON.stringify({ type, context: context || 'trending tech topics' })
+                body: JSON.stringify({ type, language: website?.language || 'id', context: context || 'trending tech topics' })
             });
             const data = await res.json();
 
@@ -110,16 +116,6 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
             setIsAiLoading(false);
         }
     };
-
-    const TONES = [
-        { value: 'professional', label: 'Professional' },
-        { value: 'directResponse', label: 'Direct Response' },
-        { value: 'educational', label: 'Educational' },
-        { value: 'genZ', label: 'Gen Z / Modern' },
-        { value: 'journalist', label: 'Journalist' },
-        { value: 'mythBuster', label: 'Myth Buster' },
-        { value: 'visionary', label: 'Visionary' },
-    ];
 
     return (
         <ModularModal

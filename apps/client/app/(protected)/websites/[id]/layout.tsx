@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Container, Flex, Stack, ThemeIcon } from "@mantine/core";
+import { Box, Flex, Stack, ThemeIcon } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { PageHeader } from "../../components/header";
@@ -35,34 +35,32 @@ export default function WebsiteLayout({
     const currentHeader = headerConfig[activeSegment] || headerConfig.details;
 
     return (
-        <Container size="sm">
-            <Stack gap={0} pb={120}>
-                <Flex gap={"xs"}>
-                    <ThemeIcon
-                        size={48}
-                        radius="md"
-                        variant="light"
-                        color="orange.5"
-                        style={{ flexShrink: 0, cursor: 'pointer' }}
-                        onClick={() => push(`/websites`)}
-                    >
-                        <IconArrowLeft size={30} />
-                    </ThemeIcon>
-                    <PageHeader
-                        title={currentHeader.title}
-                        description={currentHeader.description}
-                        icon={currentHeader.icon}
-                        breadcrumbs={currentHeader.breadcrumbs}
-                    />
-                </Flex>
+        <Stack gap={0} pb={120}>
+            <Flex gap={"xs"}>
+                <ThemeIcon
+                    size={48}
+                    radius="md"
+                    variant="light"
+                    color="orange.5"
+                    style={{ flexShrink: 0, cursor: 'pointer' }}
+                    onClick={() => push(`/websites`)}
+                >
+                    <IconArrowLeft size={30} />
+                </ThemeIcon>
+                <PageHeader
+                    title={currentHeader.title}
+                    description={currentHeader.description}
+                    icon={currentHeader.icon}
+                    breadcrumbs={currentHeader.breadcrumbs}
+                />
+            </Flex>
 
-                <Stack gap="md">
-                    <WebsiteNavigation />
-                    <Box pt="md">
-                        {children}
-                    </Box>
-                </Stack>
+            <Stack gap="md">
+                <WebsiteNavigation />
+                <Box pt="md">
+                    {children}
+                </Box>
             </Stack>
-        </Container>
+        </Stack>
     );
 }

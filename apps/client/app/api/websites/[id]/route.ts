@@ -45,38 +45,19 @@ export async function PATCH(
     const { id: websiteId } = await params;
     const body = await req.json();
 
-    const { 
-      name, 
-      templateId, 
-      logoSquare, 
-      logoRectangle, 
-      favicon, 
-      language,
-      themeConfig,
-      googleAnalyticsId,
-      type 
-    } = body;
-
     const website = await prisma.website.update({
       where: {
         id: websiteId,
       },
       data: {
-        name,
-        templateId,
-        logoSquare,
-        logoRectangle,
-        favicon,
-        language,
-        themeConfig,
-        googleAnalyticsId,
+        ...body,
       },
     });
 
     if (website) {
       const payload = {
         websiteId: website.id,
-        action: type || BuildTypeWebsitePayload.BUILD_WEBSITE,
+        action: body.type || BuildTypeWebsitePayload.BUILD_WEBSITE,
       };
 
       try {

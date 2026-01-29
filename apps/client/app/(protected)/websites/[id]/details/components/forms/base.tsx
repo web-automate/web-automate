@@ -9,17 +9,24 @@ import {
   Text,
   TextInput
 } from "@mantine/core";
+import { UseFormReturnType } from "@mantine/form";
 import { Website } from "@repo/database";
 import { IconLockFilled, IconSettings, IconWorld } from "@tabler/icons-react";
 
-const BaseForm = ({ website }: { website?: Website }) => {
+interface BaseFormProps {
+  form: UseFormReturnType<Website>;
+}
 
-  if (!website) return null;
+const BaseForm = ({ form }: BaseFormProps) => {
+
+  if (!form.values) return null;
+
+  const website = form.values;
 
   return (
     <Accordion variant="separated" defaultValue="base-info">
-      <Accordion.Item 
-        value="base-info" 
+      <Accordion.Item
+        value="base-info"
         style={{ border: '1px solid var(--mantine-color-gray-3)', borderRadius: 'var(--mantine-radius-md)' }}
       >
         <Accordion.Control icon={<IconSettings size={20} color="var(--mantine-color-blue-6)" />}>
@@ -46,8 +53,8 @@ const BaseForm = ({ website }: { website?: Website }) => {
                   <IconWorld size={14} style={{ opacity: 0.5 }} />
                   <Text size="sm" c="dimmed">{website?.domain || ''}</Text>
                 </Group>
-                <Badge 
-                  mt="xs" 
+                <Badge
+                  mt="xs"
                   variant="light"
                   color={website?.status === 'PUBLISHED' ? 'green' : website?.status === 'DRAFT' ? 'gray' : 'yellow'}
                 >
@@ -59,29 +66,31 @@ const BaseForm = ({ website }: { website?: Website }) => {
             <Stack gap="md">
               <TextInput
                 label="Website Name"
-                description="Nama yang akan muncul di dashboard dan judul default"
-                defaultValue={website?.name}
+                description="The name that will appear on the dashboard and the default title"
                 placeholder="My Awesome Website"
+                {...form.getInputProps('name')}
               />
 
               <TextInput
                 label="Domain"
-                description="Domain utama website (tidak dapat diubah)"
-                defaultValue={website?.domain}
+                description="Primary website domain (cannot be changed)"
                 disabled
                 rightSection={<IconLockFilled size={16} style={{ opacity: 0.5 }} />}
+                {...form.getInputProps('domain')}
               />
 
               <Select
                 label="Default Language"
-                description="Bahasa utama yang digunakan untuk konten"
-                defaultValue={website?.language}
+                description="Primary language used for content"
+                unselectable="on"
                 data={[
                   { value: 'en', label: 'English' },
                   { value: 'id', label: 'Bahasa Indonesia' },
                   { value: 'es', label: 'Spanish' },
                   { value: 'fr', label: 'French' }
                 ]}
+                {...form.getInputProps('language')}
+                value={form.values.language ?? ''}
               />
             </Stack>
           </Box>

@@ -54,6 +54,8 @@ export async function POST(req: Request) {
       },
     }
 
+    console.log("payload: ", payload)
+
     const scraperResponse = await fetch(`${process.env.SCRAPER_URL}/api/article/generate`, {
       method: "POST",
       headers: {
@@ -66,7 +68,7 @@ export async function POST(req: Request) {
     const responseScraper: SuccessArticleResponse = await scraperResponse.json();
     console.log("Scraper Response:", responseScraper);
 
-    if (scraperResponse.ok && responseScraper.data.status === "generating") {
+    if (scraperResponse.ok && responseScraper.data.status === "queued") {
       await prisma.article.update({
         where: { id: article.id },
         data: { status: ArticleStatus.QUEUED },

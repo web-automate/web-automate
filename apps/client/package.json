@@ -16,6 +16,7 @@
     "@ai-sdk/google": "^3.0.13",
     "@ai-sdk/react": "^3.0.51",
     "@auth/prisma-adapter": "^2.11.1",
+    "@aws-sdk/client-s3": "^3.978.0",
     "@mantine/carousel": "^8.3.13",
     "@mantine/charts": "^8.3.13",
     "@mantine/code-highlight": "^8.3.13",
@@ -53,6 +54,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0",
+    "sharp": "^0.34.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {

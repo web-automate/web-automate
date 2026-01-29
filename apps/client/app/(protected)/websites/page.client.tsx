@@ -20,11 +20,11 @@ import {
     em,
     rem
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconPlus, IconSettings, IconWorld } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import NotFoundData from "../components/data.404";
 import { PageHeader } from "../components/header";
 import { AddWebsiteModal } from "./components/addwebsite.modal";
@@ -37,19 +37,22 @@ const WebsitePageClient = ({ ipServer }: { ipServer?: string }) => {
     const { data: websites, isLoading, isError } = useWebsites();
     const { data: templates, isLoading: isLoadingTemplates, isError: isErrorTemplates } = getTemplates();
 
-    const [formState, setFormState] = useState<CreateWebsiteInput>({
-        name: "",
-        domain: "",
-        templateId: "",
-        type: "INIT_WEBSITE"
+    const form = useForm<CreateWebsiteInput>({
+        initialValues: {
+            name: "",
+            domain: "",
+            templateId: "",
+            language: "id",
+            type: "INIT_WEBSITE"
+        }
     });
 
     const resetForm = () => {
-        setFormState({ name: "", domain: "", templateId: "", type: "INIT_WEBSITE" });
+        form.setValues({ name: "", domain: "", templateId: "", language: "id", type: "INIT_WEBSITE" });
     };
 
     const { mutate: createWebsite, isPending: isCreating } = useMutation({
-        mutationFn: async (values: typeof formState) => {
+        mutationFn: async (values: typeof form.values) => {
             const res = await fetch("/api/websites", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -73,14 +76,6 @@ const WebsitePageClient = ({ ipServer }: { ipServer?: string }) => {
             notify.error(error.message || "Failed to create website");
         },
     });
-
-    const handleAddWebsite = () => {
-        if (!formState.name || !formState.domain) {
-            notify.warning("Please fill in all required fields");
-            return;
-        }
-        createWebsite(formState);
-    };
 
     const getStatusColor = (status: string) => {
         switch (status) {

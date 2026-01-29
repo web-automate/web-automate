@@ -35,7 +35,7 @@ const TemplateForm = ({ form, templates }: TemplateFormProps) => {
         <Accordion.Control icon={<IconPalette size={20} color="var(--mantine-color-blue-6)" />}>
           <Box>
             <Text fw={700} size="lg">Website Template</Text>
-            <Text size="xs" c="dimmed">Pilih tampilan dasar dan struktur tema website Anda</Text>
+            <Text size="xs" c="dimmed">Select the basic layout and theme structure for your website</Text>
           </Box>
         </Accordion.Control>
 

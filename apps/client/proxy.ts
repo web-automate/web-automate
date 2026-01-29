@@ -7,13 +7,15 @@ export async function proxy(request: NextRequest) {
         headers: await headers()
     });
     const origin = request.headers.get("origin");
+    const apiKey = request.headers.get("x-api-key");
+    const userAgent = request.headers.get("user-agent");
     const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     if (!session) {
         return NextResponse.redirect(new URL("/auth", request.url));
     }
 
-    if (origin && origin !== allowedOrigin) {
+    if (origin && origin !== allowedOrigin && apiKey !== process.env.API_KEY && userAgent?.includes("Mozilla")) {
         return new NextResponse(null, {
             status: 403,
             statusText: "Forbidden",

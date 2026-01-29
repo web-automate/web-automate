@@ -53,6 +53,7 @@ export const StatusWebsiteForm = ({
                     placeholder="Pilih Status"
                     data={statusData}
                     defaultValue={currentStatus}
+                    value={currentStatus}
                     disabled={isPending}
                     leftSection={getStatusIcon(currentStatus || '')}
                     onChange={(value) => value && onStatusChange(value as WebsiteStatus)}

@@ -5,13 +5,14 @@ type ApiOptions = {
 };
 
 export async function fetcher(url: string, options: ApiOptions = {}) {
+  const isFormData = options.body instanceof FormData;
+
   const res = await fetch(url, {
     method: options.method || 'GET',
     headers: {
-      'Content-Type': 'application/json',
       ...options.headers,
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: isFormData ? options.body : (options.body ? JSON.stringify(options.body) : undefined),
   });
 
   if (!res.ok) {

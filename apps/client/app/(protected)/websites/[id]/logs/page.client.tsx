@@ -14,7 +14,7 @@ import {
     Stack,
     Text
 } from "@mantine/core";
-import { WebsiteLog } from "@repo/database";
+import type { WebsiteLog } from "@repo/database";
 import { IconCircleCheck, IconCircleX, IconLoader2, IconTerminal2 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 

@@ -13,15 +13,17 @@ import {
     Stack,
     Table,
     Text,
-    TextInput
+    TextInput,
+    Tooltip
 } from "@mantine/core";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { Article } from "@repo/database";
-import { IconExternalLink, IconPlus, IconSearch, IconSettings, IconTrash } from "@tabler/icons-react";
+import { IconExternalLink, IconPlus, IconReload, IconSearch, IconSettings, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { AddArticleModal } from "./components/article.modal";
+import RegenerateArticleModal from "./components/regenerate.modal";
 
-// Helper function untuk mendapatkan warna badge berdasarkan status
 const getStatusBadgeColor = (status: string) => {
     const statusColors = {
         'INITIAL': 'gray',
@@ -44,6 +46,8 @@ export function ArticlesClient({
 }) {
     const api = useClientApi();
     const [opened, { open, close }] = useDisclosure(false);
+    const [regenerateOpened, { open: openRegenerate, close: closeRegenerate }] = useDisclosure(false);
+    const [ selectedArticle, setSelectedArticle ] = useState<string | null>(null);
     const isMobile = useMediaQuery(`(max-width: ${em(768)})`);
     const { push } = useRouter();
 
@@ -52,8 +56,8 @@ export function ArticlesClient({
         ['articles', websiteId],
     );
 
-    const { mutate, isPending } = api.Mutate(
-        `/api/articles/`,
+    const { mutate: deleteMutate, isPending: isDeleting } = api.Mutate(
+        `/api/articles/{id}`,
         { method: "DELETE" },
         {
             onSuccess: () => {
@@ -67,8 +71,10 @@ export function ArticlesClient({
         }
     );
 
-    const handleDelete = async (id: string) => {
-        mutate(id);
+    const handleDelete = (id: string) => {
+        if (confirm("Are you sure you want to delete this article?")) {
+            deleteMutate({id});
+        }
     }
 
     const rows = articles?.map((article: Article) => (
@@ -85,33 +91,61 @@ export function ArticlesClient({
                     {article.status}
                 </Badge>
             </Table.Td>
-            <Table.Td style={{ display: isMobile ? "none" : "table-cell"}}>
+            <Table.Td style={{ display: isMobile ? "none" : "table-cell" }}>
                 <Text size="xs">{new Date(article.createdAt).toLocaleDateString()}</Text>
             </Table.Td>
             <Table.Td>
                 <Group gap={4} justify="flex-end">
-                    <ActionIcon
-                        variant="subtle"
-                        color="gray"
+                    <Tooltip label="Visit article">
+                        <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            style={{
+                                display: article.status !== 'PUBLISHED' ? 'none' : 'flex'
+                            }}
+                        >
+                            <IconExternalLink size={16} />
+                        </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label="Regenerate article">
+                        <ActionIcon
+                            variant="subtle"
+                            color="orange"
+                            style={{
+                                display: article.status === 'FAILED' ? 'flex' : 'none'
+                            }}
+                            onClick={() => {
+                                setSelectedArticle(article.id);
+                                openRegenerate();
+                            }}
+                        >
+                            <IconReload size={16} />
+                        </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label="Edit article">
+                        <ActionIcon
+                            variant="subtle"
+                            color="blue"
+                            style={{
+                                display: article.status === 'FAILED' || article.status === 'INITIAL' || article.status === 'BUILDING' ? 'none' : 'flex'
+                            }}
+                            onClick={() => push(`/websites/${websiteId}/articles/${article.id}`)}
+                        >
+                            <IconSettings size={16} />
+                        </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label="Delete article">
+                        <ActionIcon 
+                        onClick={() => handleDelete(article.id)} 
+                        variant="subtle" 
+                        color="red"
                         style={{
-                            display: article.status !== 'PUBLISHED' ? 'none' : 'flex'
-                        }}
-                    >
-                        <IconExternalLink size={16} />
-                    </ActionIcon>
-                    <ActionIcon
-                        variant="subtle"
-                        color="blue"
-                        style={{
-                            display: article.status !== 'DRAFT' ? 'none' : 'flex'
-                        }}
-                        onClick={() => push(`/websites/${websiteId}/articles/${article.id}`)}
-                    >
-                        <IconSettings size={16} />
-                    </ActionIcon>
-                    <ActionIcon onClick={() => handleDelete(article.id)} variant="subtle" color="red">
-                        <IconTrash size={16} />
-                    </ActionIcon>
+                                display: article.status === 'BUILDING' ? 'none' : 'flex'
+                            }}
+                        >
+                            <IconTrash size={16} />
+                        </ActionIcon>
+                    </Tooltip>
                 </Group>
             </Table.Td>
         </Table.Tr>
@@ -171,6 +205,12 @@ export function ArticlesClient({
                     </Table.Tbody>
                 </Table>
             </Paper>
+
+            <RegenerateArticleModal
+                opened={regenerateOpened}
+                onClose={closeRegenerate}
+                articleId={selectedArticle}
+            />
 
             <AddArticleModal
                 opened={opened}

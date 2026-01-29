@@ -9,10 +9,11 @@ import {
   Stack,
   Text
 } from "@mantine/core";
-import { Website } from "@repo/database";
+import { UseFormReturnType } from "@mantine/form";
+import type { Website } from "@repo/database";
 import { IconChartBar, IconExternalLink, IconInfoCircle } from "@tabler/icons-react";
 
-const AnalyticsForm = ({ website }: { website: Website }) => {
+const AnalyticsForm = ({ form }: { form: UseFormReturnType<Website> }) => {
   return (
     <Accordion variant="separated" defaultValue="google-analytics">
       <Accordion.Item
@@ -32,7 +33,7 @@ const AnalyticsForm = ({ website }: { website: Website }) => {
               <Alert
                 variant="light"
                 color="blue"
-                title="Informasi"
+                title="Information"
                 icon={<IconInfoCircle size={18} />}
                 radius="md"
               >
@@ -58,8 +59,9 @@ const AnalyticsForm = ({ website }: { website: Website }) => {
               >
                 <Input
                   placeholder="G-XXXXXXXXXX"
-                  defaultValue={website.googleAnalyticsId || ''}
                   mt={5}
+                  inputMode="text"
+                  {...form.getInputProps('googleAnalyticsId')}
                 />
               </Input.Wrapper>
 

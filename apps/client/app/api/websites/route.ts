@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       return NextResponse.json(validation.error.format(), { status: 400 });
     }
 
-    const { name, domain, templateId, type } = validation.data;
+    const { name, domain, templateId, language, type } = validation.data;
 
     const existingSite = await prisma.website.findUnique({
       where: { domain },
@@ -71,6 +71,7 @@ export async function POST(req: Request) {
         domain,
         templateId,
         ownerId: session.user.id,
+        language,
         themeConfig: {
           "primary": {
             "50": "#f5f8ff", "100": "#e5ecff", "200": "#d1deff", "300": "#b5ccff", "400": "#8eb6ff",
@@ -82,11 +83,14 @@ export async function POST(req: Request) {
           }
         },
         authors: {
-          create: [
+          connectOrCreate: [
             {
-              name: authorName,
-              slug: authorSlug,
-              bio: `Automated content creator for ${domain}, powered by Web-Automate.`,
+              where: { slug: authorSlug }, 
+              create: {
+                name: authorName,
+                slug: authorSlug,
+                bio: `Automated content creator for ${domain}, powered by Web-Automate.`,
+              }
             }
           ]
         },
@@ -113,7 +117,11 @@ Bergabunglah bersama **Web-Automate**.
           `.trim(),
               status: "PUBLISHED",
               publishedAt: new Date(),
-              createdById: session.user.id,
+              createdBy: {
+                connect: {
+                  id: session.user.id
+                }
+              },
               author: {
                 connect: { slug: authorSlug }
               },

@@ -42,7 +42,7 @@ const ThemeConfigForm = ({ form }: ThemeProps) => {
         <Accordion.Control icon={<IconPalette size={20} color="var(--mantine-color-blue-6)" />}>
           <Box>
             <Text fw={700} size="lg">Theme Configuration</Text>
-            <Text size="xs" c="dimmed">Generasi palet warna 50-950 otomatis untuk website Anda</Text>
+            <Text size="xs" c="dimmed">Automatically generate color palettes 50-950 for your website</Text>
           </Box>
         </Accordion.Control>
 
@@ -108,7 +108,7 @@ const ThemeConfigForm = ({ form }: ThemeProps) => {
                 <ColorSwatch color={themeConfig.primary?.["600"]} size={24} radius="sm" />
                 <ColorSwatch color={themeConfig.secondary?.["600"]} size={24} radius="sm" />
                 <Text size="xs" c="dimmed">
-                  Mantine palette terdeteksi untuk domain <strong>{form.values?.domain}</strong>.
+                  Mantine color palettes 50-950 detected for domain <strong>{form.values?.domain}</strong>.
                 </Text>
               </Group>
             </Paper>

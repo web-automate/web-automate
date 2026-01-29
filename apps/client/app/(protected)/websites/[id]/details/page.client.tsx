@@ -56,8 +56,21 @@ export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
   );
 
   const form = useForm<Website & { type?: BuildTypeWebsitePayload }>({
+    mode: "uncontrolled",
     initialValues: {
-      ...website,
+      name: website?.name ?? '',
+      status: website?.status ?? 'DRAFT',
+      createdAt: website?.createdAt ?? new Date(),
+      updatedAt: website?.updatedAt ?? new Date(),
+      domain: website?.domain ?? '',
+      logoSquare: website?.logoSquare ?? null,
+      logoRectangle: website?.logoRectangle ?? null,
+      favicon: website?.favicon ?? null,
+      language: website?.language ?? '',
+      templateId: website?.templateId ?? '',
+      themeConfig: website?.themeConfig ?? null,
+      googleAnalyticsId: website?.googleAnalyticsId === null ? "G-XXXXXX" : website?.googleAnalyticsId,
+      ownerId: website?.ownerId ?? '',
       type: "BUILD_WEBSITE" as BuildTypeWebsitePayload,
     } as any,
   });
@@ -78,10 +91,10 @@ export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
 
   return (
     <Stack gap="lg">
-      <BaseForm website={form.values} />
-      <AssetsForm website={form.values} />
+      <BaseForm form={form} />
+      <AssetsForm form={form} />
       <TemplateForm form={form} templates={templates} />
-      <AnalyticsForm website={form.values} />
+      <AnalyticsForm form={form} />
       <ThemeConfigForm form={form} />
 
       <Affix position={{ bottom: isMobile ? 120 : 20, right: 20 }}>
