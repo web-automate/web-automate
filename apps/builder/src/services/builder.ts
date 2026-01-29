@@ -91,7 +91,7 @@ export class BuilderService {
       await this.notifyWebhook(websiteId, 'BUILDING', 'Installing dependencies with pnpm...');
       await execAsync(`pnpm install`, { cwd: paths.tempDir });
       await execAsync(`pnpm install`, { cwd: paths.tempDir });
-      const initialOutput = await execAsync(`pnpm initial`, { 
+      const initialOutput = await execAsync(`pnpm initial`, {
         cwd: paths.tempDir,
         env: {
           ...process.env,
@@ -166,45 +166,70 @@ export class BuilderService {
   }
 
   private static async setupNginx(domain: string, publicDir: string, configPath: string, enabledPath: string) {
+    console.log(`[NGINX] Starting configuration for domain: ${domain}`);
     const config = nginxConfig(domain, publicDir);
 
-    await fs.ensureDir(path.dirname(configPath));
-    await fs.ensureDir(path.dirname(enabledPath));
+    try {
+      // 1. Persiapkan folder internal (temp)
+      await fs.ensureDir(path.dirname(configPath));
+      await fs.writeFile(configPath, config);
+      console.log(`[NGINX] Local config file written to: ${configPath}`);
 
-    await fs.writeFile(configPath, config);
+      if (process.platform === 'win32') {
+        console.log(`[WINDOWS-TEST] Skipping Linux commands. Nginx config: ${configPath}`);
+        return;
+      }
 
-    if (process.platform === 'win32') {
-      console.log(`[WINDOWS-TEST] Nginx config generated at: ${configPath}`);
-      return;
+      // 2. Copy ke sites-available sistem
+      const targetAvailable = `/etc/nginx/sites-available/${path.basename(configPath)}`;
+      await execAsync(`sudo cp ${configPath} ${targetAvailable}`);
+      console.log(`[NGINX] Config copied to: ${targetAvailable}`);
+
+      // 3. Kelola symlink di sites-enabled sistem
+      const systemEnabledPath = `/etc/nginx/sites-enabled/${path.basename(configPath)}`;
+      await execAsync(`sudo ln -sf ${targetAvailable} ${systemEnabledPath}`);
+      console.log(`[NGINX] Symbolic link created: ${systemEnabledPath} -> ${targetAvailable}`);
+
+      // 4. Opsional: Hapus default config jika mengganggu (Welcome to nginx)
+      const defaultEnabled = '/etc/nginx/sites-enabled/default';
+      if (fs.existsSync(defaultEnabled)) {
+        console.log(`[NGINX] Removing default config to prevent conflict...`);
+        await execAsync(`sudo rm ${defaultEnabled}`);
+      }
+
+      // 5. Test & Reload
+      console.log(`[NGINX] Testing configuration...`);
+      const { stdout: testOut } = await execAsync(`sudo nginx -t`);
+      console.log(`[NGINX] Test result: ${testOut.trim()}`);
+
+      await execAsync(`sudo systemctl reload nginx`);
+      console.log(`[NGINX] Successfully reloaded Nginx for ${domain}`);
+
+    } catch (error: any) {
+      console.error(`[NGINX-ERROR] Failed to setup Nginx for ${domain}:`, error.message);
+      throw error; // Lempar error agar ditangkap oleh try-catch di fungsi build()
     }
-
-    // Production Linux Nginx reload
-    await execAsync(`sudo cp ${configPath} /etc/nginx/sites-available/`);
-    if (!fs.existsSync(enabledPath)) {
-      await execAsync(`sudo ln -s /etc/nginx/sites-available/${path.basename(configPath)} ${enabledPath}`);
-    }
-    await execAsync(`sudo nginx -t && sudo systemctl reload nginx`);
   }
 
   private static async setupSSL(domain: string) {
-  if (process.platform === 'win32') return;
+    if (process.platform === 'win32') return;
 
-  try {
-    const email = env.ADMIN_EMAIL || "admin@" + domain;
-    
-    console.log(`[SSL] Requesting certificate for ${domain}...`);
-    
-    const { stdout, stderr } = await execAsync(
-      `sudo certbot --nginx -d ${domain} --non-interactive --agree-tos -m ${email} --keep-until-expiring`
-    );
+    try {
+      const email = env.ADMIN_EMAIL || "admin@" + domain;
 
-    console.log(stdout);
-    if (stderr) console.warn(`[SSL-WARN] ${stderr}`);
+      console.log(`[SSL] Requesting certificate for ${domain}...`);
 
-    await execAsync(`sudo systemctl reload nginx`);
-    
-  } catch (error: any) {
-    console.error(`[SSL-ERROR] Certbot failed for ${domain}:`, error.message);
+      const { stdout, stderr } = await execAsync(
+        `sudo certbot --nginx -d ${domain} --non-interactive --agree-tos -m ${email} --keep-until-expiring`
+      );
+
+      console.log(stdout);
+      if (stderr) console.warn(`[SSL-WARN] ${stderr}`);
+
+      await execAsync(`sudo systemctl reload nginx`);
+
+    } catch (error: any) {
+      console.error(`[SSL-ERROR] Certbot failed for ${domain}:`, error.message);
+    }
   }
-}
 }
