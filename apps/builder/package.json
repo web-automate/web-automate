@@ -1,11 +1,12 @@
 {
   "name": "builder",
   "version": "1.0.0",
-  "main": "index.ts",
+  "type": "module",
+  "main": "apps/builder/dist/apps/builder/index.js",
   "scripts": {
     "dev": "tsx watch index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node apps/builder/dist/apps/builder/index.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.978.0",
