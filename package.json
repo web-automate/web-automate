@@ -9,7 +9,7 @@
     "build": "turbo run build",
     "db:gen": "pnpm --filter @repo/database gen",
     "db:migrate": "pnpm --filter @repo/database db:migrate",
-    "db:seed": "pnpm --filter @repo/database seed",
+    "db:seed": "pnpm --filter @repo/database db:seed",
     "clean": "rm -rf node_modules **/node_modules pnpm-lock.yaml && pnpm install"
   },
   "devDependencies": {
