@@ -11,7 +11,7 @@ export const apps = [
     },
     {
         name: "cms-worker",
-        script: "dist/index.js", 
+        script: "dist/apps/builder/index.js", 
         cwd: "./apps/builder",
         env: {
             NODE_ENV: "production"
