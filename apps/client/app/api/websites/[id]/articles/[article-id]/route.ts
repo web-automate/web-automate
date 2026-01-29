@@ -4,12 +4,12 @@ import { NextResponse } from "next/server";
 import { ArticleUpdateInput } from "../../../../../../../../packages/database/generated/prisma/models";
 
 export async function GET(
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string; "article-id": string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id, "article-id": articleId } = await params;
     const article = await prisma.article.findUnique({
-      where: { id },
+      where: { id: articleId, websiteId: id },
       include: { seo: true, website: true },
     });
 
