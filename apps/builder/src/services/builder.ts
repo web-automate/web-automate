@@ -34,8 +34,8 @@ export class BuilderService {
       publicDir: path.join(root, "public", domain),
       // Hugo default output folder is 'public' inside the working directory
       hugoOutputDir: path.join(root, "temp", domain, "public"),
-      nginxConfigPath: path.join(root, "nginx", "available", `${domain}.conf`),
-      nginxEnabledPath: path.join(root, "nginx", "enabled", `${domain}.conf`),
+      nginxConfigPath: path.join(root, "nginx", "available", `${domain}`),
+      nginxEnabledPath: path.join(root, "nginx", "enabled", `${domain}`),
     };
   }
 
