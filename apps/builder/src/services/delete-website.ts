@@ -67,6 +67,7 @@ export class DeleteWebsiteService {
   }
 
   private static async cleanupNginx(domain: string, paths: any) {
+    console.log(`[DELETE-NGINX] Cleaning up Nginx configs for ${domain}`);
     if (await fs.pathExists(paths.nginxConfigPath)) await fs.remove(paths.nginxConfigPath);
     if (await fs.pathExists(paths.nginxEnabledPath)) await fs.remove(paths.nginxEnabledPath);
 

@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { ArticleUpdateInput } from "../../../../../../packages/database/generated/prisma/models";
 
 export async function GET(
-  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -55,7 +54,6 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

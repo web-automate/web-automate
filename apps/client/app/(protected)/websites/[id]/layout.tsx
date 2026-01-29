@@ -2,7 +2,7 @@
 
 import { Box, Flex, Stack, ThemeIcon } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { PageHeader } from "../../components/header";
 import { WebsiteNavigation } from "./components/website.nav";
 
@@ -12,9 +12,7 @@ export default function WebsiteLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
-    const params = useParams();
     const { push } = useRouter();
-    const id = params.id as string;
 
     const headerConfig: Record<string, any> = {
         details: {

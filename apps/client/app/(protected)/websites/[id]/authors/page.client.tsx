@@ -18,7 +18,6 @@ import { useForm } from '@mantine/form';
 import { Author } from '@repo/database';
 import { IconDotsVertical, IconEdit, IconExternalLink, IconPlus, IconTrash } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 interface AuthorsPageClientProps {
@@ -27,8 +26,7 @@ interface AuthorsPageClientProps {
 }
 
 export default function AuthorsPageClient({ websiteId, initialData }: AuthorsPageClientProps) {
-    const router = useRouter();
-    const { Get, Mutate } = useClientApi();
+    const { Mutate } = useClientApi();
     const [opened, setOpened] = useState(false);
     const authors = initialData;
 

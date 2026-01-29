@@ -1,4 +1,4 @@
-import { Author, BuildTypeWebsitePayload, prisma, StaticPage, StaticPageSeo, Template, Website, WebsiteSeo, WebsiteStatus } from "@repo/database";
+import { Author, prisma, StaticPage, StaticPageSeo, Template, Website, WebsiteSeo, WebsiteStatus } from "@repo/database";
 import { exec } from "child_process";
 import fs from "fs-extra";
 import path from "path";
@@ -21,13 +21,19 @@ export interface StaticPageWithRelations extends StaticPage {
   seo: StaticPageSeo | null;
 }
 
+export interface BuildTypeWebsitePayload {
+  websiteId: string;
+  mode: 'manual' | 'webhook' | 'auto';
+}
+
 export class BuilderService {
   private static getPaths(domain: string) {
     const root = path.resolve(env.ROOT_BUILD_PATH);
     return {
       tempDir: path.join(root, "temp", domain),
       publicDir: path.join(root, "public", domain),
-      hugoOutputDir: path.join(root, "temp", domain, "html"),
+      // Hugo default output folder is 'public' inside the working directory
+      hugoOutputDir: path.join(root, "temp", domain, "public"),
       nginxConfigPath: path.join(root, "nginx", "available", `${domain}.conf`),
       nginxEnabledPath: path.join(root, "nginx", "enabled", `${domain}.conf`),
     };
@@ -35,25 +41,25 @@ export class BuilderService {
 
   private static async notifyWebhook(websiteId: string, status: WebsiteStatus, message: string, error?: any) {
     try {
-        await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/webhook/builder`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "x-api-key": env.API_KEY || ""
-            },
-            body: JSON.stringify({
-                websiteId,
-                status, // 'BUILDING', 'SUCCESS', 'FAILED'
-                message,
-                details: error ? error.message : undefined
-            }),
-        });
+      await fetch(`${env.NEXT_PUBLIC_APP_URL}/api/webhook/builder`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": env.API_KEY || ""
+        },
+        body: JSON.stringify({
+          websiteId,
+          status,
+          message,
+          details: error ? error.message : undefined
+        }),
+      });
     } catch (e) {
-        console.error("Failed to send webhook notification:", e);
+      console.error("Failed to send webhook notification:", e);
     }
-}
+  }
 
-  static async build(websiteId: string, mode: BuildTypeWebsitePayload) {
+  static async build(websiteId: string, mode: string) {
     const website = await prisma.website.findUnique({
       where: { id: websiteId },
       include: {
@@ -66,40 +72,52 @@ export class BuilderService {
     });
 
     if (!website) throw new Error(`Website ${websiteId} not found`);
+    if (!website.template?.source) throw new Error(`Template for website ${websiteId} has no source`);
 
     const domain = website.domain || website.id;
     const paths = this.getPaths(domain);
 
     try {
-        // Mulai Building
-        await this.notifyWebhook(websiteId, 'BUILDING', 'Preparing data and directory...');
-        
-        await fs.remove(paths.tempDir);
-        await this.prepareData(paths.tempDir, website as WebsiteWithRelations);
-        
-        // Tahap Hugo
-        await this.notifyWebhook(websiteId, 'BUILDING', 'Running Hugo generation...');
-        await fs.writeFile(path.join(paths.tempDir, "hugo.toml"), `title = "${website.name}"\npublishDir = "html"`);
-        await this.runHugoBuild(paths.tempDir);
+      // 1. Initializing Structure & Submodules
+      await this.notifyWebhook(websiteId, 'BUILDING', 'Cleaning up and cloning repository...');
+      await fs.remove(paths.tempDir);
+      await execAsync(`git clone --recursive ${website.template.source} "${paths.tempDir}"`);
 
-        // Tahap Deploy
-        await this.notifyWebhook(websiteId, 'BUILDING', 'Deploying to public directory...');
-        await this.deployAndCleanup(paths.hugoOutputDir, paths.publicDir, paths.tempDir);
+      // 2. Preparing Data
+      await this.notifyWebhook(websiteId, 'BUILDING', 'Preparing content and data files...');
+      await this.prepareData(paths.tempDir, website as WebsiteWithRelations);
 
-        // Tahap Nginx
-        await this.notifyWebhook(websiteId, 'BUILDING', 'Configuring Nginx...');
-        await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath, paths.nginxEnabledPath);
+      // 3. Running PNPM Install (to prepare Tailwind/PostCSS in theme)
+      await this.notifyWebhook(websiteId, 'BUILDING', 'Installing dependencies with pnpm...');
+      await execAsync(`pnpm install`, { cwd: paths.tempDir });
+      await execAsync(`pnpm install`, { cwd: paths.tempDir });
+      const initialOutput = await execAsync(`pnpm initial`, { 
+        cwd: paths.tempDir,
+        env: {
+          ...process.env,
+          GOCACHE: path.join(paths.tempDir, ".gocache"),
+        }
+      });
+      console.log(initialOutput.stdout);
 
-        // Final Success
-        await this.notifyWebhook(websiteId, 'SUCCESS', 'Website built and deployed successfully.');
-        console.log(`[${mode.toUpperCase()}] Success: ${domain}`);
+      // 4. Tahap Hugo Build
+      await this.notifyWebhook(websiteId, 'BUILDING', 'Running Hugo generation...');
+      await this.runHugoBuild(paths.tempDir);
+
+      // 5. Tahap Deploy & Nginx
+      await this.notifyWebhook(websiteId, 'BUILDING', 'Deploying and configuring Nginx...');
+      await this.deployAndCleanup(paths.hugoOutputDir, paths.publicDir, paths.tempDir);
+      await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath, paths.nginxEnabledPath);
+
+      await this.notifyWebhook(websiteId, 'SUCCESS', 'Website built and deployed successfully.');
+      console.log(`[${mode.toUpperCase()}] Success: ${domain}`);
 
     } catch (error) {
-        // Error Notification
-        await this.notifyWebhook(websiteId, 'FAILED', 'Build process failed.', error);
-        console.error(`[${mode.toUpperCase()}] Failed:`, error);
-        if (process.env.NODE_ENV === 'production') await fs.remove(paths.tempDir);
-        throw error;
+      await this.notifyWebhook(websiteId, 'FAILED', 'Build process failed.', error);
+      console.error(`[${mode.toUpperCase()}] Failed:`, error);
+      // Clean up temp only if it's a critical failure in production
+      if (process.env.NODE_ENV === 'production') await fs.remove(paths.tempDir);
+      throw error;
     }
   }
 
@@ -110,8 +128,10 @@ export class BuilderService {
     await fs.ensureDir(dataDir);
     await fs.ensureDir(contentDir);
 
+    // Save website metadata for Hugo data templates
     await fs.writeJson(path.join(dataDir, "website.json"), website, { spaces: 2 });
 
+    // Generate markdown files for articles
     const tasks = website.articles.map(async (article: ArticleWithRelations) => {
       const fileName = `${article.slug || article.id}.md`;
       const frontmatter = HugoTransformer.toFrontmatter(article);
@@ -123,16 +143,20 @@ export class BuilderService {
   }
 
   private static async runHugoBuild(workingDir: string) {
-    await execAsync(`hugo -s "${workingDir}" -d html`);
+    await execAsync(`hugo --gc --minify`, { cwd: workingDir, env: { ...process.env } });
   }
 
   private static async deployAndCleanup(source: string, destination: string, temp: string) {
     await fs.ensureDir(destination);
     await fs.emptyDir(destination);
+
     if (await fs.pathExists(source)) {
       await fs.copy(source, destination);
     }
-    if (process.env.NODE_ENV === 'production') await fs.remove(temp);
+
+    if (process.env.NODE_ENV === 'production') {
+      await fs.remove(temp);
+    }
   }
 
   private static async setupNginx(domain: string, publicDir: string, configPath: string, enabledPath: string) {
@@ -142,15 +166,16 @@ export class BuilderService {
     await fs.ensureDir(path.dirname(enabledPath));
 
     await fs.writeFile(configPath, config);
-    
+
     if (process.platform === 'win32') {
       console.log(`[WINDOWS-TEST] Nginx config generated at: ${configPath}`);
       return;
     }
 
+    // Production Linux Nginx reload
     await execAsync(`sudo cp ${configPath} /etc/nginx/sites-available/`);
     if (!fs.existsSync(enabledPath)) {
-      await execAsync(`sudo ln -s ${configPath} ${enabledPath}`);
+      await execAsync(`sudo ln -s /etc/nginx/sites-available/${path.basename(configPath)} ${enabledPath}`);
     }
     await execAsync(`sudo nginx -t && sudo systemctl reload nginx`);
   }

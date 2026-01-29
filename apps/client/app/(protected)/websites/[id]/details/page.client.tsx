@@ -36,7 +36,7 @@ export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
     ['websites', id],
   );
 
-  const { data: templates, isLoading: isLoadingTemplates } = api.Get<Template[]>(
+  const { data: templates } = api.Get<Template[]>(
     `/api/templates?websiteId=${id}`,
     ['templates', id],
   );

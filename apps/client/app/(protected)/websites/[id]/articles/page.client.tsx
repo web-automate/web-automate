@@ -39,10 +39,8 @@ const getStatusBadgeColor = (status: string) => {
 
 export function ArticlesClient({
     websiteId,
-    initialData
 }: {
     websiteId: string;
-    initialData: Article[]
 }) {
     const api = useClientApi();
     const [opened, { open, close }] = useDisclosure(false);
@@ -56,7 +54,7 @@ export function ArticlesClient({
         ['articles', websiteId],
     );
 
-    const { mutate: deleteMutate, isPending: isDeleting } = api.Mutate(
+    const { mutate: deleteMutate } = api.Mutate(
         `/api/articles/{id}`,
         { method: "DELETE" },
         {

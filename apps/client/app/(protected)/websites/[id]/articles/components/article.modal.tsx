@@ -48,7 +48,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
         ['authors', websiteId]
     );
 
-    const { data: website, isLoading: isLoadingWebsite } = api.Get<Website>(
+    const { data: website } = api.Get<Website>(
         `/api/websites/${websiteId}`,
         ['websites', websiteId],
       );
@@ -68,7 +68,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
             category: (value) => (!value ? 'Category is required' : null),
             authorId: (value) => (!value ? 'Please select an author' : null),
             keywords: (value) => (value.length === 0 ? 'Add at least one keyword' : null),
-            imageCount: (value, values) => (withImage && value !== undefined && (value < 1 || value > 5) ? 'Max 5 images' : null),
+            imageCount: (value) => (withImage && value !== undefined && (value < 1 || value > 5) ? 'Max 5 images' : null),
         },
     });
 

@@ -1,6 +1,4 @@
 import { rem, Select } from "@mantine/core";
-import { useState } from "react";
-
 
 const select = (tld: string | null, setTld: (value: string | null) => void) => {
     return (

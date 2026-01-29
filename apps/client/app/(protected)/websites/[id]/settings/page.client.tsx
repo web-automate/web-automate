@@ -12,13 +12,13 @@ const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
     const api = useClientApi();
     const { push } = useRouter();
 
-    const { data: website, isLoading } = api.Get<Website>(
+    const { data: website } = api.Get<Website>(
         `/api/websites/${websiteId}`,
         ['websites', websiteId],
       );
 
     const { mutate, isPending } = api.Mutate(
-        `/api/websites/`,
+        `/api/websites/{id}`,
         { method: "DELETE" },
         {
             onSuccess: () => {
@@ -33,7 +33,7 @@ const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
     );
 
     const { mutate: mutateStatus } = api.Mutate(
-        `/api/websites/${websiteId}`,
+        `/api/websites/{id}`,
         { method: "PATCH" },
         {
             onSuccess: () => {
@@ -47,12 +47,17 @@ const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
     );
 
     const handleDelete = () => {
-        mutate(websiteId);
+        mutate({
+            id: websiteId,
+        });
     };
 
     const handleStatusChange = (status: WebsiteStatus) => {
         mutateStatus({
-            status,
+            id: websiteId,
+            body: {
+                status,
+            },
         });
     };
 

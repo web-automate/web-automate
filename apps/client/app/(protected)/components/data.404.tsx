@@ -1,13 +1,13 @@
-import { 
-    Text, 
-    Title, 
-    Stack, 
-    ThemeIcon, 
-    rem, 
+import {
     Box,
-    Center
+    Center,
+    Stack,
+    Text,
+    ThemeIcon,
+    Title,
+    rem
 } from "@mantine/core";
-import { IconSearchOff, IconDatabaseOff } from "@tabler/icons-react";
+import { IconSearchOff } from "@tabler/icons-react";
 import { ReactNode } from "react";
 
 interface NotFoundDataProps {

@@ -10,7 +10,6 @@ import { ArticleForm } from "./components/forms/article";
 import { SeoForm } from "./components/forms/seo";
 
 interface Props {
-    websiteId: string;
     article: Article;
 }
 
@@ -60,7 +59,7 @@ const prepareUpdateData = (formValues: any) => {
     };
 };
 
-export function ArticleDetailClient({ websiteId, article }: Props) {
+export function ArticleDetailClient({ article }: Props) {
     const api = useClientApi();
     const isMobile = useMediaQuery(`(max-width: ${em(768)})`);
 

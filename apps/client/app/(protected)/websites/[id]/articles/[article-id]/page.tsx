@@ -7,7 +7,7 @@ export default async function ArticleDetailPage({
 }: { 
     params: Promise<{ id: string; 'article-id': string }> 
 }) {
-    const { 'article-id': articleId, id: websiteId } = await params;
+    const { 'article-id': articleId } = await params;
 
     const article : Article = await apiServer.GET(
         `/api/articles/${articleId}`
@@ -17,7 +17,6 @@ export default async function ArticleDetailPage({
 
     return (
         <ArticleDetailClient 
-            websiteId={websiteId} 
             article={article}
         />
     );

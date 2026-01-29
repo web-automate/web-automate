@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body: ArticleWebhookResponse = await req.json();
-    const { type, articleData, title, content, status } = body;
+    const { articleData, title, content, status } = body;
     const articleId = articleData?.id;
 
     if (!articleId) {

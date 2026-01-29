@@ -2,13 +2,12 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; authorId: string }> }
+  { params }: { params: Promise<{ id: string; "author-id": string }> }
 ) {
   try {
     const paramsResolved = await params;
     const websiteId = paramsResolved.id;
-    const authorId = paramsResolved.authorId;
+    const authorId = paramsResolved["author-id"];
     const author = await prisma.author.findFirst({
       where: {
         id: authorId,
@@ -40,12 +39,11 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; authorId: string }> }
+  { params }: { params: Promise<{ id: string; "author-id": string }> }
 ) {
   try {
     const paramsResolved = await params;
-    const websiteId = paramsResolved.id;
-    const authorId = paramsResolved.authorId;
+    const authorId = paramsResolved["author-id"];
     const body = await req.json()
     const {
       name,
@@ -86,13 +84,11 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; authorId: string }> }
+  { params }: { params: Promise<{ id: string; "author-id": string }> }
 ) {
   try {
     const paramsResolved = await params;
-    const websiteId = paramsResolved.id;
-    const authorId = paramsResolved.authorId;
+    const authorId = paramsResolved["author-id"];
     await prisma.author.delete({
       where: {
         id: authorId

@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 
 
 export async function GET(
-  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -79,7 +78,6 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

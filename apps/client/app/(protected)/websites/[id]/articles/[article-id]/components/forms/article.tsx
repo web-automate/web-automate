@@ -22,11 +22,6 @@ export function ArticleForm({ form }: { form: UseFormReturnType<any> }) {
         return { ...props, value: props.value ?? undefined };
     };
 
-    const getSafeDateProps = (path: string) => {
-        const props = form.getInputProps(path as any);
-        return { ...props, value: props.value ? new Date(props.value) : null };
-    };
-
     return (
         <Accordion variant="separated" multiple defaultValue={['basic', 'content', 'meta', 'publishing']}>
             <Accordion.Item value="basic">

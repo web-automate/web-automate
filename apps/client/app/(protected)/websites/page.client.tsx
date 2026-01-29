@@ -35,7 +35,7 @@ const WebsitePageClient = ({ ipServer }: { ipServer?: string }) => {
     const [isAddWebsiteModalOpen, { open: openAddWebsiteModal, close: closeAddWebsiteModal }] = useDisclosure(false);
     const isMobile = useMediaQuery(`(max-width: ${em(768)})`);
     const { data: websites, isLoading, isError } = useWebsites();
-    const { data: templates, isLoading: isLoadingTemplates, isError: isErrorTemplates } = getTemplates();
+    const { data: templates, isLoading: isLoadingTemplates } = getTemplates();
 
     const form = useForm<CreateWebsiteInput>({
         initialValues: {

@@ -20,7 +20,6 @@ import { useForm } from '@mantine/form';
 import { Author } from '@repo/database';
 import { IconArrowLeft, IconDeviceFloppy, IconUpload } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface AuthorDetailPageClientProps {
@@ -30,9 +29,10 @@ interface AuthorDetailPageClientProps {
 }
 
 export default function AuthorDetailPageClient({ websiteId, authorId, initialData }: AuthorDetailPageClientProps) {
-    const router = useRouter();
     const { Get, Mutate } = useClientApi();
     const [file, setFile] = useState<File | null>(null);
+
+    console.log(file);
 
     const { data: author, isLoading } = Get<Author>(
         `/api/websites/${websiteId}/authors/${authorId}`,
