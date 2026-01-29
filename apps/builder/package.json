@@ -1,12 +1,11 @@
 {
   "name": "builder",
   "version": "1.0.0",
-  "type": "module",
-  "main": "apps/builder/dist/apps/builder/index.js",
+  "main": "dist/apps/builder/index.js",
   "scripts": {
     "dev": "tsx watch index.ts",
     "build": "tsc",
-    "start": "node apps/builder/dist/apps/builder/index.js"
+    "start": "tsx dist/apps/builder/index.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.978.0",
@@ -21,6 +20,7 @@
     "@types/express": "^4.17.21",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.12.7",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.7.2",
     "typescript": "^5.4.5"
   }
