@@ -109,6 +109,12 @@ export class BuilderService {
       await this.deployAndCleanup(paths.hugoOutputDir, paths.publicDir, paths.tempDir);
       await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath, paths.nginxEnabledPath);
 
+      // 6. Tahap SSL Certbot
+      if (process.env.NODE_ENV === 'production') {
+        await this.notifyWebhook(websiteId, 'BUILDING', 'Securing with SSL Certbot...');
+        await this.setupSSL(domain);
+      }
+
       await this.notifyWebhook(websiteId, 'SUCCESS', 'Website built and deployed successfully.');
       console.log(`[${mode.toUpperCase()}] Success: ${domain}`);
 
@@ -179,4 +185,26 @@ export class BuilderService {
     }
     await execAsync(`sudo nginx -t && sudo systemctl reload nginx`);
   }
+
+  private static async setupSSL(domain: string) {
+  if (process.platform === 'win32') return;
+
+  try {
+    const email = env.ADMIN_EMAIL || "admin@" + domain;
+    
+    console.log(`[SSL] Requesting certificate for ${domain}...`);
+    
+    const { stdout, stderr } = await execAsync(
+      `sudo certbot --nginx -d ${domain} --non-interactive --agree-tos -m ${email} --keep-until-expiring`
+    );
+
+    console.log(stdout);
+    if (stderr) console.warn(`[SSL-WARN] ${stderr}`);
+
+    await execAsync(`sudo systemctl reload nginx`);
+    
+  } catch (error: any) {
+    console.error(`[SSL-ERROR] Certbot failed for ${domain}:`, error.message);
+  }
+}
 }

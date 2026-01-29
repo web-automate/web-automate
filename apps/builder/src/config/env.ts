@@ -10,4 +10,5 @@ export const env = {
   DELETE_QUEUE_NAME: 'delete_website',
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   API_KEY: process.env.API_KEY,
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL,
 };
