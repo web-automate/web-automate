@@ -3,11 +3,14 @@ import prisma from "@/lib/prisma";
 import createWebsiteSchema from "@/lib/schema/website";
 import { RabbitMQService } from "@/lib/services/rabbitmq/producer";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const queueName = process.env.RABBITMQ_QUEUE_NAME || "build_website";
 
-export async function GET() {
+export async function GET(
+    request: NextRequest,
+    
+) {
   const session = await auth.api.getSession({
     headers: await headers()
   });

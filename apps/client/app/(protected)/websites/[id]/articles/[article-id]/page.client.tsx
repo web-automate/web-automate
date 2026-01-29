@@ -81,7 +81,7 @@ export function ArticleDetailClient({ article }: Props) {
     });
 
     const { mutate, isPending } = api.Mutate(
-        `/api/articles/${article.id}`,
+        `/api/websites/{id}/articles/{article-id}`,
         { method: "PATCH" },
         { 
             onSuccess: () => {
@@ -100,7 +100,13 @@ export function ArticleDetailClient({ article }: Props) {
 
     const handleSave = () => {
         const cleanData = prepareUpdateData(form.values);
-        mutate(cleanData);
+        mutate({
+            params: {
+                id: article.websiteId,
+                "article-id": article.id,
+            },
+            body: cleanData,
+        });
     };
 
     if (!article) return null;

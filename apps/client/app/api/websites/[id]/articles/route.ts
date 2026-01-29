@@ -3,21 +3,19 @@ import { ArticleRequest, SuccessArticleResponse } from "@/lib/types/api";
 import { ArticleStatus } from "@repo/database";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; }> }
+) {
   try {
-    const { searchParams } = new URL(req.url);
-    const websiteId = searchParams.get("websiteId");
-
-    if (!websiteId) {
-      return NextResponse.json({ error: "websiteId is required" }, { status: 400 });
-    }
-
-    const articles = await prisma.article.findMany({
+    const { id: websiteId } = await params;
+    const articles = await prisma.article.findMany({ 
       where: { websiteId },
       include: { seo: true },
-      orderBy: { createdAt: "desc" },
     });
-
+    if (!articles) {
+        return NextResponse.json({ error: "Articles not found" }, { status: 404 });
+    }
     return NextResponse.json(articles);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch articles" }, { status: 500 });

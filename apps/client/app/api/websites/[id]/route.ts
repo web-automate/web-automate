@@ -2,10 +2,11 @@ import { auth } from "@/lib/auth";
 import { RabbitMQService } from "@/lib/services/rabbitmq/producer";
 import { BuildTypeWebsitePayload, prisma, WebsiteStatus } from "@repo/database";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 
 export async function GET(
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -78,6 +79,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
