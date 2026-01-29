@@ -1,6 +1,6 @@
 import * as bcrypt from "bcryptjs";
-import { prisma } from "..";
 import { Role } from "../generated/prisma/enums";
+import { prisma } from "../index";
 
 async function main() {
   console.log('🌱 Starting seeding...');
