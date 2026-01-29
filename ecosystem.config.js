@@ -11,7 +11,7 @@ export const apps = [
     },
     {
         name: "cms-worker",
-        script: "dist/apps/builder/index.js", 
+        script: "node --experimental-specifier-resolution=node dist/apps/builder/index.js", 
         cwd: "./apps/builder",
         env: {
             NODE_ENV: "production"
