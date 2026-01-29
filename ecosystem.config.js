@@ -11,7 +11,8 @@ export const apps = [
     },
     {
         name: "cms-worker",
-        script: "tsx dist/apps/builder/index.js", 
+        script: "pnpm", 
+        args: "start",
         cwd: "./apps/builder",
         env: {
             NODE_ENV: "production"
