@@ -43,6 +43,7 @@ async function main() {
       name: 'Minimalist Blog',
       slug: 'minimalist-blog',
       thumbnail: 'https://placehold.co/600x400/png?text=Minimalist+Theme',
+      source: 'git@github.com:web-automate/template-yehezkiel.git',
       defaultConfig: {
         colors: { primary: '#18181b', background: '#ffffff', text: '#27272a' },
         fonts: { heading: 'Inter', body: 'Merriweather' },
