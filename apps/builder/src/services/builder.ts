@@ -107,7 +107,7 @@ export class BuilderService {
       // 5. Tahap Deploy & Nginx
       await this.notifyWebhook(websiteId, 'BUILDING', 'Deploying and configuring Nginx...');
       await this.deployAndCleanup(paths.hugoOutputDir, paths.publicDir, paths.tempDir);
-      await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath, paths.nginxEnabledPath);
+      await this.setupNginx(domain, paths.publicDir, paths.nginxConfigPath);
 
       // 6. Tahap SSL Certbot
       if (process.env.NODE_ENV === 'production') {
@@ -165,7 +165,7 @@ export class BuilderService {
     }
   }
 
-  private static async setupNginx(domain: string, publicDir: string, configPath: string, enabledPath: string) {
+  private static async setupNginx(domain: string, publicDir: string, configPath: string) {
     console.log(`[NGINX] Starting configuration for domain: ${domain}`);
     const config = nginxConfig(domain, publicDir);
 
