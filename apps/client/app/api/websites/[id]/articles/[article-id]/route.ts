@@ -1,9 +1,10 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@repo/database";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ArticleUpdateInput } from "../../../../../../../../packages/database/generated/prisma/models";
 
 export async function GET(
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string; "article-id": string }> }
 ) {
   try {
@@ -54,6 +55,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

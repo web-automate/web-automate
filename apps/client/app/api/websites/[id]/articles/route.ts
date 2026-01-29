@@ -1,9 +1,10 @@
 import prisma from "@/lib/prisma";
 import { ArticleRequest, SuccessArticleResponse } from "@/lib/types/api";
 import { ArticleStatus } from "@repo/database";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string; }> }
 ) {
   try {
