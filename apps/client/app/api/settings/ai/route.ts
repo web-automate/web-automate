@@ -18,7 +18,7 @@ export async function POST(req: Request) {
           provider: validatedData.provider,
           apiKey: validatedData.apiKey,
           baseUrl: validatedData.baseUrl || null,
-          isActive: true,
+          isActive: false,
         }
     });
 
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(_req: Request) {
   try {
     console.log("Attempting to fetch AI configurations...");
     
@@ -60,6 +60,10 @@ export async function GET() {
         isActive: true,
         provider: true,
         id: true,
+        apiKey: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
       }
     });
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { notify } from "@/app/components/notifications";
 import { authClient } from "@/lib/auth.client";
 import { AiProvider } from "@/lib/const/ai.provider";
 import { useClientApi } from "@/lib/hooks/client.api";
@@ -20,6 +21,7 @@ import {
     Title
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
 import { AiConfiguration } from "@repo/database";
 import {
     IconBrandGoogle,
@@ -31,11 +33,21 @@ import {
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
+import AiListModal from "./components/ai-list.modal";
 
 const SettingsPageClient = ({ aiConfig }: { aiConfig?: AiConfiguration[] }) => {
     const { push } = useRouter();
     const api = useClientApi();
     const [isSignoutingOut, setIsSignoutingOut] = useState(false);
+    const [isAiListModalOpened, { open: openAiListModal, close: closeAiListModal }] = useDisclosure(false);
+
+    const { data: aiConfigs, isLoading } = api.Get<AiConfiguration[]>(
+        `/api/settings/ai`,
+        ['ai-config'],
+        {
+            initialData: aiConfig,
+        },
+    );
 
     const form = useForm({
         initialValues: {
@@ -52,18 +64,34 @@ const SettingsPageClient = ({ aiConfig }: { aiConfig?: AiConfiguration[] }) => {
     const { mutate: saveKey, isPending: isSaving } = api.Mutate(
         "/api/settings/ai",
         { method: "POST" },
-        { onSuccess: () => form.reset() }
+        {
+            onSuccess: () => {
+                notify.success("Key saved successfully");
+                form.reset()
+            },
+            onError: () => {
+                notify.error("Failed to save key");
+            },
+            invalidateKeys: [['ai-config']],
+        }
     );
 
     const handleSignOut = async () => {
         setIsSignoutingOut(true);
         await authClient.signOut({
             fetchOptions: {
-                onSuccess: () => push("/auth")
+                onSuccess: () => push("/auth"),
+                onError: () => notify.error("Failed to sign out, please try again or contact support"),
             }
         });
         setIsSignoutingOut(false);
     };
+
+    const handleSubmit = async (values: typeof form.values) => {
+        saveKey({
+            body: values,
+        });
+    }
 
     return (
         <Container size="sm" pb="xl">
@@ -91,10 +119,10 @@ const SettingsPageClient = ({ aiConfig }: { aiConfig?: AiConfiguration[] }) => {
                     </Group>
 
                     <Text size="xs" c="dimmed" mb="lg">
-                        Configure your LLM providers. These keys are used for content generation and research.
+                        Configure your LLM providers. These keys are used for content generation and research. <Badge variant="light" size="xs" color="blue">One API key for each provider</Badge>
                     </Text>
 
-                    <form onSubmit={form.onSubmit((values) => saveKey(values))}>
+                    <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
                         <Stack gap="sm">
                             <Select
                                 label="Provider"
@@ -135,24 +163,33 @@ const SettingsPageClient = ({ aiConfig }: { aiConfig?: AiConfiguration[] }) => {
 
                 <Paper withBorder radius="md">
                     <Box p="md">
-                        <Text fw={600} size="sm" mb="xs">Active Integrations</Text>
+                        <Group justify="space-between" align="center" mb={2}>
+                            <Text fw={600} size="sm" mb="xs">Active Integrations</Text>
+                            <Button onClick={openAiListModal} variant="subtle" size="compact-xs">See More</Button>
+                        </Group>
                         <Stack gap="xs">
-                            {aiConfig && aiConfig.length > 0 ? (
-                                aiConfig.map((config) => (
-                                    <Group justify="space-between" p="xs" style={{ border: '1px solid var(--mantine-color-gray-2)', borderRadius: '8px' }} key={config.id}>
-                                        <Group gap="sm">
-                                            <IconProvider provider={config.provider} isActive={config.isActive} />
-                                            <Text size="sm" fw={500}>{config.provider.toUpperCase()}</Text>
+                            {
+                                isLoading ? (
+                                    <Text size="sm" c="dimmed">Loading integrations...</Text>
+                                ) : aiConfigs && aiConfigs.length > 0 ? (
+                                    aiConfigs.filter(config => config.isActive).map((config) => (
+                                        <Group justify="space-between" p="xs" style={{ border: '1px solid var(--mantine-color-gray-2)', borderRadius: '8px' }} key={config.id}>
+                                            <Group gap="sm">
+                                                <IconProvider provider={config.provider} isActive={config.isActive} />
+                                                <Text size="sm" fw={500}>{config.provider.toUpperCase()}</Text>
+                                            </Group>
+                                            <Badge color={config.isActive ? 'green' : 'red'} variant="light">{config.isActive ? 'Active' : 'Inactive'}</Badge>
                                         </Group>
-                                        <Badge color={config.isActive ? 'green' : 'red'} variant="light">{config.isActive ? 'Active' : 'Inactive'}</Badge>
-                                    </Group>
-                                ))
-                            ) : (
-                                <Text size="sm" c="dimmed">No active integrations</Text>
-                            )}
+                                    ))
+                                ) : (
+                                    <Text size="sm" c="dimmed">No active integrations</Text>
+                                )
+                            }
                         </Stack>
                     </Box>
                 </Paper>
+
+                <AiListModal aiConfig={aiConfigs} opened={isAiListModalOpened} onClose={closeAiListModal} />
 
                 <Divider label="Danger Zone" labelPosition="center" color="red" />
 

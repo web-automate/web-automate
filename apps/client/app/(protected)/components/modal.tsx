@@ -18,7 +18,9 @@ interface ModularModalProps {
     title: string;
     description?: string;
     children: ReactNode;
+    withSubmitButton?: boolean;
     submitLabel?: string;
+    withCancelButton?: boolean;
     cancelLabel?: string;
     onSubmit?: () => void;
     isLoading?: boolean;
@@ -33,7 +35,9 @@ export function ModularModal({
     title,
     description,
     children,
+    withSubmitButton = true,
     submitLabel = "Save Changes",
+    withCancelButton = true,
     cancelLabel = "Cancel",
     onSubmit,
     isLoading = false,
@@ -82,12 +86,16 @@ export function ModularModal({
                     }}
                 >
                     <Group justify="flex-end" gap="sm">
-                        <Button variant="default" onClick={onClose} disabled={isLoading}>
-                            {cancelLabel}
-                        </Button>
-                        <Button onClick={onSubmit} loading={isLoading} disabled={isDisabled}>
-                            {submitLabel}
-                        </Button>
+                        {withCancelButton && (
+                            <Button variant="default" onClick={onClose} disabled={isLoading}>
+                                {cancelLabel}
+                            </Button>
+                        )}
+                        {withSubmitButton && (
+                            <Button onClick={onSubmit} loading={isLoading} disabled={isDisabled}>
+                                {submitLabel}
+                            </Button>
+                        )}
                     </Group>
                 </Box>
             )}

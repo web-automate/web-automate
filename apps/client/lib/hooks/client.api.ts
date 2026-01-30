@@ -23,7 +23,7 @@ export const useClientApi = () => {
   const queryClient = useQueryClient();
 
   return {
-    Get: <T>(url: string, key: any[], options?: { enabled?: boolean }) => {
+    Get: <T>(url: string, key: any[], options?: any) => {
       return useQuery<T>({
         queryKey: key,
         queryFn: () => fetcher(url),
@@ -33,7 +33,7 @@ export const useClientApi = () => {
 
     Mutate: <TData, TVariables>(
       url: string,
-      config: { method: 'POST' | 'PATCH' | 'DELETE' | 'PUT'; headers?: Record<string, string> },
+      config?: { method?: 'POST' | 'PATCH' | 'DELETE' | 'PUT'; headers?: Record<string, string> },
       callbacks?: {
         onSuccess?: (data: TData) => void;
         onError?: (error: any) => void;
@@ -45,18 +45,18 @@ export const useClientApi = () => {
           const finalUrl = buildUrlWithParams(url, variables.id);
           let requestBody = variables.body;
 
-          if (config.method === 'DELETE') {
+          if (config?.method === 'DELETE') {
             if (typeof variables === 'string' || typeof variables === 'number') {
               requestBody = undefined;
             }
           }
 
           return fetcher(finalUrl, {
-            method: config.method,
+            method: config?.method || variables.method,
             body: requestBody,
             headers: {
               'Content-Type': 'application/json',
-              ...config.headers,
+              ...config?.headers,
               'x-api-key': process.env.API_KEY || '',
             }
           });

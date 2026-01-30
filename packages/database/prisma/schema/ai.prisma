@@ -1,6 +1,6 @@
 model AiConfiguration {
   id          String   @id @default(cuid())
-  provider    String   @unique // Contoh: 'anthropic', 'openai', 'gemini'
+  provider    String   
   apiKey      String   // Simpan encrypted jika memungkinkan
   baseUrl     String?  // Untuk provider yang menggunakan custom endpoint/proxy
   isActive    Boolean  @default(true)
