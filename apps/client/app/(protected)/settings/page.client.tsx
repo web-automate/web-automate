@@ -118,7 +118,7 @@ const SettingsPageClient = ({ aiConfig }: { aiConfig?: AiConfiguration[] }) => {
                         <Title order={4}>AI Providers</Title>
                     </Group>
 
-                    <Text size="xs" c="dimmed" mb="lg">
+                    <Text component="div" size="xs" c="dimmed" mb="lg">
                         Configure your LLM providers. These keys are used for content generation and research. <Badge variant="light" size="xs" color="blue">One API key for each provider</Badge>
                     </Text>
 

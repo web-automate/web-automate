@@ -56,12 +56,12 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string; "article-id": string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id, "article-id": articleId } = await params;
     await prisma.article.delete({
-      where: { id },
+      where: { id: articleId, websiteId: id },
     });
     return NextResponse.json({ message: "Article deleted successfully" });
   } catch (error) {

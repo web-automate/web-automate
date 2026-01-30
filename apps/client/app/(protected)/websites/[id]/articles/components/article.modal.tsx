@@ -44,7 +44,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
     const [isAiLoading, setIsAiLoading] = useState(false);
 
     const { data: authors, isLoading: isLoadingAuthors } = api.Get<Author[]>(
-        `/api/websites/${websiteId}/authors?websiteId=${websiteId}`,
+        `/api/websites/${websiteId}/authors`,
         ['authors', websiteId]
     );
 
@@ -73,7 +73,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
     });
 
     const { mutate, isPending } = api.Mutate(
-        "/api/articles",
+        `/api/websites/{id}/articles`,
         { method: "POST" },
         {
             onSuccess: () => {
@@ -93,7 +93,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
             ...values,
             imageCount: withImage ? values.imageCount : 0
         };
-        mutate({body: payload});
+        mutate({id: websiteId, body: payload});
     };
 
     const handleAiGenerate = async (type: 'topic' | 'keywords') => {

@@ -45,17 +45,17 @@ export function ArticlesClient({
     const api = useClientApi();
     const [opened, { open, close }] = useDisclosure(false);
     const [regenerateOpened, { open: openRegenerate, close: closeRegenerate }] = useDisclosure(false);
-    const [ selectedArticle, setSelectedArticle ] = useState<string | null>(null);
+    const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
     const isMobile = useMediaQuery(`(max-width: ${em(768)})`);
     const { push } = useRouter();
 
     const { data: articles, isLoading } = api.Get<Article[]>(
-        `/api/articles?websiteId=${websiteId}`,
+        `/api/websites/${websiteId}/articles`,
         ['articles', websiteId],
     );
 
     const { mutate: deleteMutate } = api.Mutate(
-        `/api/articles/{id}`,
+        `/api/websites/{id}/articles/{article-id}`,
         { method: "DELETE" },
         {
             onSuccess: () => {
@@ -69,9 +69,9 @@ export function ArticlesClient({
         }
     );
 
-    const handleDelete = (id: string) => {
+    const handleDelete = (articleId: string) => {
         if (confirm("Are you sure you want to delete this article?")) {
-            deleteMutate({id});
+            deleteMutate({ id: {id: websiteId, "article-id": articleId} });
         }
     }
 
@@ -133,11 +133,11 @@ export function ArticlesClient({
                         </ActionIcon>
                     </Tooltip>
                     <Tooltip label="Delete article">
-                        <ActionIcon 
-                        onClick={() => handleDelete(article.id)} 
-                        variant="subtle" 
-                        color="red"
-                        style={{
+                        <ActionIcon
+                            onClick={() => handleDelete(article.id)}
+                            variant="subtle"
+                            color="red"
+                            style={{
                                 display: article.status === 'BUILDING' ? 'none' : 'flex'
                             }}
                         >
