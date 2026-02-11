@@ -25,7 +25,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { AiConfiguration } from "@repo/database";
 import {
     IconBrandGoogle,
-    IconBrandOpenai,
     IconDeviceFloppy,
     IconKey,
     IconLogout,
@@ -51,7 +50,7 @@ const SettingsPageClient = ({ aiConfig }: { aiConfig?: AiConfiguration[] }) => {
 
     const form = useForm({
         initialValues: {
-            provider: aiConfig?.[0]?.provider || 'google',
+            provider: 'google',
             apiKey: '',
             baseUrl: '',
         },
@@ -94,7 +93,7 @@ const SettingsPageClient = ({ aiConfig }: { aiConfig?: AiConfiguration[] }) => {
     }
 
     return (
-        <Container size="sm" pb="xl">
+        <Container size="sm" p={0} pb="xl">
             <Stack gap="xl">
                 <Group justify="space-between" align="flex-end">
                     <Box>
@@ -212,9 +211,9 @@ const IconProvider = ({ provider, isActive }: { provider: string; isActive: bool
     const color = isActive ? 'var(--mantine-color-green-filled)' : 'var(--mantine-color-gray-5)';
 
     const iconMap: Record<string, ReactNode> = {
-        [AiProvider.ANTHROPIC]: <IconRobot size={20} color={color} />,
+        // [AiProvider.ANTHROPIC]: <IconRobot size={20} color={color} />,
         [AiProvider.GOOGLE]: <IconBrandGoogle size={20} color={color} />,
-        [AiProvider.OPENAI]: <IconBrandOpenai size={20} color={color} />,
+        // [AiProvider.OPENAI]: <IconBrandOpenai size={20} color={color} />,
     };
 
     return <>{iconMap[provider] || <IconRobot size={20} color={color} />}</>;

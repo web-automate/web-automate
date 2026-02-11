@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Flex, Stack, ThemeIcon } from "@mantine/core";
+import { ActionIcon, Box, Container, Group, Stack } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import { PageHeader } from "../../components/header";
@@ -17,15 +17,31 @@ export default function WebsiteLayout({
     const headerConfig: Record<string, any> = {
         details: {
             title: "Website Details",
-            description: "Manage your website basic information and configurations.",
+            description: "Manage website configurations.",
         },
         articles: {
-            title: "Articles Management",
-            description: "Create, edit, and organize your website blog posts.",
+            title: "Articles",
+            description: "Manage blog posts.",
         },
         pages: {
-            title: "Static Pages",
-            description: "Manage your static pages like About, Contact, and Privacy Policy.",
+            title: "Pages",
+            description: "Manage static pages.",
+        },
+        authors: {
+            title: "Authors",
+            description: "Manage authors list.",
+        },
+        seo: {
+            title: "SEO",
+            description: "Search engine optimization.",
+        },
+        logs: {
+            title: "Logs",
+            description: "View activity logs.",
+        },
+        settings: {
+            title: "Settings",
+            description: "General settings.",
         }
     };
 
@@ -33,32 +49,40 @@ export default function WebsiteLayout({
     const currentHeader = headerConfig[activeSegment] || headerConfig.details;
 
     return (
-        <Stack gap={0} pb={120}>
-            <Flex gap={"xs"}>
-                <ThemeIcon
-                    size={48}
-                    radius="md"
-                    variant="light"
-                    color="orange.5"
-                    style={{ flexShrink: 0, cursor: 'pointer' }}
-                    onClick={() => push(`/websites`)}
-                >
-                    <IconArrowLeft size={30} />
-                </ThemeIcon>
-                <PageHeader
-                    title={currentHeader.title}
-                    description={currentHeader.description}
-                    icon={currentHeader.icon}
-                    breadcrumbs={currentHeader.breadcrumbs}
-                />
-            </Flex>
+        <Container size="md" p={0}>
+            <Stack gap="lg">
+                <Group wrap="nowrap" align="center" justify="space-between" style={{ borderBottom: '1px solid #e5e5e5' }} pb="md">
+                    <Group wrap="nowrap" align="center" gap="sm">
+                        <ActionIcon
+                            variant="light"
+                            color="orange"
+                            size="lg"
+                            radius="md"
+                            onClick={() => push(`/websites`)}
+                            aria-label="Back to websites"
+                        >
+                            <IconArrowLeft size={20} />
+                        </ActionIcon>
 
-            <Stack gap="md">
-                <WebsiteNavigation />
-                <Box pt="md">
+                        <Box >
+                            <PageHeader
+                                title={currentHeader.title}
+                                description={currentHeader.description}
+                                icon={currentHeader.icon}
+                                breadcrumbs={currentHeader.breadcrumbs}
+                            />
+                        </Box>
+                    </Group>
+
+                    <Box>
+                        <WebsiteNavigation />
+                    </Box>
+                </Group>
+
+                <Box>
                     {children}
                 </Box>
             </Stack>
-        </Stack>
+        </Container>
     );
 }

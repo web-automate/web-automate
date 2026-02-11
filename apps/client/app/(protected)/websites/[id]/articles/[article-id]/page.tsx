@@ -7,13 +7,11 @@ export default async function ArticleDetailPage({
 }: { 
     params: Promise<{ id: string; 'article-id': string }> 
 }) {
-    const { 'article-id': articleId } = await params;
+    const { id, 'article-id': articleId } = await params;
 
     const article : Article = await apiServer.GET(
-        `/api/articles/${articleId}`
+        `/api/websites/${id}/articles/${articleId}`
     );
-
-    console.log(article);
 
     return (
         <ArticleDetailClient 

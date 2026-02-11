@@ -18,7 +18,8 @@ export async function POST(req: Request) {
       prisma.website.update({
         where: { id: websiteId },
         data: { 
-          status: status === 'SUCCESS' ? 'PUBLISHED' : 
+          status: status === 'SUCCESS' ? 'PUBLISHED' :
+                  status === 'MAINTENANCE' ? 'MAINTENANCE' :
                   status === 'FAILED' ? 'FAILED' : 'BUILDING' 
         },
       }),

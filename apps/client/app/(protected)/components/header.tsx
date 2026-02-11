@@ -1,18 +1,18 @@
 'use client';
 
-import { 
-    Title, 
-    Text, 
-    Group, 
-    Stack, 
-    Box, 
-    Breadcrumbs, 
+import {
     Anchor,
+    Box,
+    Breadcrumbs,
+    Group,
+    Stack,
+    Text,
     ThemeIcon,
+    Title,
     rem
 } from "@mantine/core";
-import { ReactNode } from "react";
 import { IconChevronRight } from "@tabler/icons-react";
+import { ReactNode } from "react";
 
 interface BreadcrumbItem {
     title: string;
@@ -35,7 +35,7 @@ export function PageHeader({
     action 
 }: PageHeaderProps) {
     return (
-        <Box mb="xl">
+        <Box>
             {breadcrumbs && (
                 <Breadcrumbs 
                     separator={<IconChevronRight size={14} color="gray" />} 
@@ -52,7 +52,7 @@ export function PageHeader({
                 </Breadcrumbs>
             )}
 
-            <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
+            <Group justify="space-between" align="flex-center" wrap="wrap" gap="md">
                 <Group align="flex-start" gap="md" style={{ flex: 1 }}>
                     {icon && (
                         <ThemeIcon 

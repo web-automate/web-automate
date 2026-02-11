@@ -55,20 +55,20 @@ const AiListModal = ({ aiConfig, opened, onClose }: AiListModalProps) => {
     const setActive = (id: string) => {
         if (!aiConfig) return;
         setActiveMutate({
-            id,
+            params: {id},
         })
     };
     const handleDelete = (id: string) => {
         if (!aiConfig) return;
         AIMutate({
-            id,
+            params: {id},
             method: "DELETE",
         })
     };
     const handleEdit = (id: string) => {
         if (!aiConfig) return;
         AIMutate({
-            id,
+            params: {id},
             method: "PATCH",
             body: {
                 ...formData.values,

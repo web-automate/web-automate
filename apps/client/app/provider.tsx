@@ -7,7 +7,7 @@ import '@mantine/notifications/styles.css';
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <MantineProvider defaultColorScheme="auto">
-      <Notifications 
+      <Notifications
         position="top-right"
         zIndex={1000}
         limit={5}

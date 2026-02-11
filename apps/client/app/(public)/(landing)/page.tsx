@@ -1,6 +1,6 @@
 import LandingPageClient from "./page.client";
 
-const LandingPage = () => {
+const LandingPage = async () => {
   return <LandingPageClient />;
 };
 

@@ -9,7 +9,7 @@ const ProtectedLayout = ({ children }: { children: ReactNode }) => {
   const queryClient = new QueryClient()
   return (
     <QueryClientProvider client={queryClient}>
-      <Box p={"md"}>
+      <Box p={"md"} pb={160}>
         {children}
         <Navbar />
       </Box>

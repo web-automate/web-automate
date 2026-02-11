@@ -24,8 +24,6 @@ export const StatusWebsiteForm = ({
 }: StatusWebsiteFormProps) => {
 
     const statusData: StatusOption[] = [
-        { value: "DRAFT", label: 'Draft', description: 'Website belum dipublikasikan' },
-        { value: "READY", label: 'Ready', description: 'Siap untuk dideploy' },
         { value: "PUBLISHED", label: 'Published', description: 'Website aktif dan dapat diakses' },
         { value: "MAINTENANCE", label: 'Maintenance', description: 'Mode perbaikan' },
     ];

@@ -2,10 +2,9 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import createWebsiteSchema from "@/lib/schema/website";
 import { RabbitMQService } from "@/lib/services/rabbitmq/producer";
+import { queueName } from "@repo/types";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-
-const queueName = process.env.RABBITMQ_QUEUE_NAME || "build_website";
 
 export async function GET( _request: NextRequest ) {
   const session = await auth.api.getSession({
@@ -135,6 +134,26 @@ Bergabunglah bersama **Web-Automate**.
             }
           ]
         } as any,
+        seo: {
+          create: {
+            title: `${name} - ${domain}`,
+            description: `Web-Automate: Solusi Otomatisasi CMS Modern untuk ${name}`,
+            ogType: "website",
+            author: authorSlug,
+            canonicalUrl: `https://${domain}`,
+            keywords: "otomatisasi cms, web-automate, cms modern",
+            ogDescription: `Web-Automate: Solusi Otomatisasi CMS Modern untuk ${name}. Kelola konten CMS Anda secara otomatis dengan Web-Automate.`,
+            ogImage: `https://${domain}/og-image.png`,
+            twitterCard: "summary_large_image",
+            ogTitle: `${name} - ${domain}`,
+            twitterDescription: "",
+            ogUrl: `https://${domain}`,
+            twitterImage: `https://${domain}/twitter-image.png`,
+            robots: "index, follow",
+            twitterHandle: "",
+            twitterTitle: `${name} - ${domain}`,
+          }
+        },
         logs: {
           create: {
             status: "SUCCESS",
@@ -145,18 +164,19 @@ Bergabunglah bersama **Web-Automate**.
       include: {
         articles: true,
         authors: true,
-        logs: true
+        logs: true,
+        seo: true
       }
     });
 
     if (website) {
       const buildPayload = {
         websiteId: website.id,
-        action: type,
+        mode: type,
       };
 
       try {
-        await RabbitMQService.sendToQueue(queueName, buildPayload);
+        await RabbitMQService.sendToQueue(queueName.init, buildPayload);
         console.log(`[QUEUE] Website ${website.id} queued for building.`);
       } catch (queueError) {
         console.error("[RABBITMQ_ERROR]", queueError);

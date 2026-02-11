@@ -15,6 +15,9 @@
   "include": [
     "index.ts",
     "generated/prisma/index.d.ts",
+    "generated/prisma/models.ts",
+    "generated/prisma/client.ts",
+    "generated/prisma/**/*.ts",
     "prisma/seed.ts"
   ],
   "exclude": ["node_modules", "dist"]

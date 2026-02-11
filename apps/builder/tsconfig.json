@@ -5,13 +5,16 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@repo/database": ["../../packages/database/index.ts"]
+      "@repo/database": ["../../packages/database/index.ts"],
+      "@repo/types": ["../../packages/types/index.ts"]
     }
   },
   "include": [
     "index.ts",
+    "src/**/*.ts",
     "../../packages/database/index.ts",
-    "../../packages/database/generated/prisma/index.d.ts"
+    "../../packages/database/generated/prisma/index.d.ts",
+    "../../packages/types/index.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

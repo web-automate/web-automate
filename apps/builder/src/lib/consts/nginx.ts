@@ -5,6 +5,21 @@ server {
     root ${publicDir};
     index index.html;
 
+    if (-f $document_root/.maintenance) {
+        return 503;
+    }
+
+    error_page 503 @maintenance;
+
+    location @maintenance {
+        default_type text/html;
+        rewrite ^(.*)$ /maintenance.html break;
+    }
+
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
+        try_files $uri =404;
+    }
+
     location / {
         try_files $uri $uri/ =404;
     }

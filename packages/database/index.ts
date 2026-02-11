@@ -23,4 +23,5 @@ export const prisma =
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export * from './generated/prisma/client';
+export * from './generated/prisma/models';
 

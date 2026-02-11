@@ -4,10 +4,21 @@
     "module": "esnext",
     "jsx": "react-jsx",
     "noEmit": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@/*": ["./*"],
-      "@repo/database": ["../../packages/database"]
+      "@/*": [
+        "./*"
+      ],
+      "@repo/database": [
+        "../../packages/database"
+      ],
+      "@repo/types": [
+        "../../packages/types"
+      ]
     }
   },
   "include": [
@@ -15,7 +26,11 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "../../packages/types/index.ts",
+    "../../packages/database/index.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

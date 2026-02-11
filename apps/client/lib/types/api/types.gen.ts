@@ -12,11 +12,11 @@ export type WebhookResponse = {
     title?: string;
     content?: string;
     /**
-     * Data tambahan untuk artikel
+     * Additional article data
      */
     articleData?: {
         /**
-         * ID Artikel di Database
+         * Article ID in Database
          */
         id?: string;
     };
@@ -34,11 +34,11 @@ export type ImageRequest = {
     /**
      * Gaya Gambar
      */
-    tone?: 'artSchool' | 'doodle' | 'popArt' | 'dramatic' | 'neonPunk' | 'ghibli' | 'corporateFlat' | 'manga' | 'clay3d' | 'vintageFilm';
+    tone?: 'artSchool' | 'doodle' | 'popArt' | 'dramatic' | 'neonPunk' | 'ghibli' | 'corporateFlat' | 'manga' | 'clay3d' | 'vintageFilm' | 'realisticPhoto' | 'graphicDesign' | 'cinematic' | 'eventPhoto' | 'pixelArt' | 'oilPainting' | 'isometric3d';
     /**
      * Rasio Aspek Gambar
      */
-    aspectRatio?: '1:1' | '16:9' | '9:16' | '21:9' | '4:3';
+    aspectRatio?: '1:1' | '16:9' | '9:16' | '21:9' | '4:3' | '4:5' | '3:4' | '3:2' | '2:3' | '16:10' | '2.35:1';
     /**
      * URL Callback untuk menerima hasil (URL Gambar/Path)
      */
@@ -63,10 +63,31 @@ export type ImageRequest = {
     };
 };
 
+export type EditImageRequest = {
+    /**
+     * Instruksi edit gambar
+     */
+    prompt: string;
+    tone?: 'artSchool' | 'doodle' | 'popArt' | 'dramatic' | 'neonPunk' | 'ghibli' | 'corporateFlat' | 'manga' | 'clay3d' | 'vintageFilm' | 'realisticPhoto' | 'graphicDesign' | 'cinematic' | 'eventPhoto' | 'pixelArt' | 'oilPainting' | 'isometric3d';
+    aspectRatio?: '1:1' | '16:9' | '9:16' | '21:9' | '4:3' | '4:5' | '3:4' | '3:2' | '2:3' | '16:10' | '2.35:1';
+    webhookUrl?: string;
+    webpFormat?: boolean | null;
+    imageMaxSizeKB?: number | null;
+    articleData?: {
+        id?: string;
+        imageIndex?: number | null;
+    };
+    /**
+     * File gambar input
+     */
+    image: Blob | File;
+};
+
 export type SuccessImageResponse = {
     success: boolean;
     message: string;
     data: {
+        queue: number;
         prompt: string;
         status: 'pending' | 'queued' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
         webhookUrl?: string;
@@ -90,37 +111,56 @@ export type ImageWebhookResponse = {
     };
 };
 
+export type GenerateSecretRequest = {
+    /**
+     * User email to be embedded in the token
+     */
+    email: string;
+};
+
+export type GenerateSecretResponse = {
+    success: boolean;
+    /**
+     * Generated JWT Token
+     */
+    token: string;
+    /**
+     * Token expiration time
+     */
+    expiresIn: string;
+};
+
 export type ArticleRequest = {
     /**
-     * Topik utama artikel
+     * Main topic of the article
      */
     topic: string;
     /**
-     * List keyword SEO
+     * List of SEO keywords
      */
     keywords?: Array<string>;
     /**
-     * Kategori Artikel
+     * Article category
      */
     category?: string;
     /**
-     * Gaya Bahasa
+     * Article tone
      */
     tone?: 'professional' | 'educational' | 'journalist' | 'genZ' | 'mythBuster' | 'visionary' | 'directResponse';
     /**
-     * URL Callback
+     * Callback URL
      */
     webhookUrl?: string;
     /**
-     * Jumlah gambar yang diinginkan
+     * Number of images to generate
      */
     imageCount?: number;
     /**
-     * Data tambahan untuk artikel
+     * Additional article data
      */
     articleData?: {
         /**
-         * ID Artikel di Database
+         * Article ID in Database
          */
         id?: string;
     };
@@ -136,11 +176,11 @@ export type SuccessArticleResponse = {
          */
         webhookUrl?: string;
         /**
-         * Data tambahan untuk artikel
+         * Additional article data
          */
         articleData?: {
             /**
-             * ID Artikel di Database
+             * Article ID in Database
              */
             id?: string;
         };
@@ -153,26 +193,26 @@ export type ArticleWebhookResponse = {
     title: string;
     content: string;
     /**
-     * Data tambahan untuk artikel
+     * Additional article data
      */
     articleData?: {
         /**
-         * ID Artikel di Database
+         * Article ID in Database
          */
         id?: string;
     };
     status: 'pending' | 'queued' | 'generating' | 'waiting_for_images' | 'completed' | 'failed_content' | 'failed_images' | 'failed' | 'draft' | 'published';
     /**
-     * Metadata tambahan untuk pemrosesan gambar
+     * Additional metadata for image processing
      */
     properties?: {
         imageCount?: number;
         /**
-         * Daftar prompt gambar hasil ekstraksi AI
+         * List of image prompts for AI-generated images
          */
         imagePrompts?: Array<{
             index: number;
-            tone: 'artSchool' | 'doodle' | 'popArt' | 'dramatic' | 'neonPunk' | 'ghibli' | 'corporateFlat' | 'manga' | 'clay3d' | 'vintageFilm';
+            tone: 'artSchool' | 'doodle' | 'popArt' | 'dramatic' | 'neonPunk' | 'ghibli' | 'corporateFlat' | 'manga' | 'clay3d' | 'vintageFilm' | 'realisticPhoto' | 'graphicDesign' | 'cinematic' | 'eventPhoto' | 'pixelArt' | 'oilPainting' | 'isometric3d';
             prompt: string;
         }>;
     };
@@ -187,7 +227,7 @@ export type GetHealthData = {
 
 export type GetHealthResponses = {
     /**
-     * Server Berjalan dengan Baik
+     * Server is running properly
      */
     200: {
         success: 'true';
@@ -200,12 +240,6 @@ export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
 
 export type PostApiImageGenerateData = {
     body?: ImageRequest;
-    headers: {
-        /**
-         * API Key untuk autentikasi
-         */
-        'x-api-key': string;
-    };
     path?: never;
     query?: never;
     url: '/api/image/generate';
@@ -213,7 +247,7 @@ export type PostApiImageGenerateData = {
 
 export type PostApiImageGenerateErrors = {
     /**
-     * Validasi Gagal
+     * Validation Failed
      */
     400: {
         error: string;
@@ -224,21 +258,96 @@ export type PostApiImageGenerateError = PostApiImageGenerateErrors[keyof PostApi
 
 export type PostApiImageGenerateResponses = {
     /**
-     * Request diterima dan masuk antrian
+     * Request accepted and queued for processing
      */
     202: SuccessImageResponse;
 };
 
 export type PostApiImageGenerateResponse = PostApiImageGenerateResponses[keyof PostApiImageGenerateResponses];
 
+export type PostApiImageEditData = {
+    body?: EditImageRequest;
+    path?: never;
+    query?: never;
+    url: '/api/image/edit';
+};
+
+export type PostApiImageEditErrors = {
+    /**
+     * Validation Failed
+     */
+    400: {
+        error: string;
+    };
+};
+
+export type PostApiImageEditError = PostApiImageEditErrors[keyof PostApiImageEditErrors];
+
+export type PostApiImageEditResponses = {
+    /**
+     * Request accepted and queued for processing
+     */
+    202: SuccessImageResponse;
+};
+
+export type PostApiImageEditResponse = PostApiImageEditResponses[keyof PostApiImageEditResponses];
+
+export type PostApiAuthSecretData = {
+    body?: GenerateSecretRequest;
+    path?: never;
+    query?: never;
+    url: '/api/auth/secret';
+};
+
+export type PostApiAuthSecretErrors = {
+    /**
+     * Input Validation Failed
+     */
+    400: {
+        success: boolean;
+        error?: unknown;
+    };
+    /**
+     * Invalid Master API Key
+     */
+    401: {
+        success: boolean;
+        error: string;
+    };
+};
+
+export type PostApiAuthSecretError = PostApiAuthSecretErrors[keyof PostApiAuthSecretErrors];
+
+export type PostApiAuthSecretResponses = {
+    /**
+     * Successfully created token
+     */
+    200: GenerateSecretResponse;
+};
+
+export type PostApiAuthSecretResponse = PostApiAuthSecretResponses[keyof PostApiAuthSecretResponses];
+
+export type GetApiArticleHealthData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/article/health';
+};
+
+export type GetApiArticleHealthResponses = {
+    /**
+     * Article Service is healthy
+     */
+    200: {
+        success: boolean;
+        message: string;
+    };
+};
+
+export type GetApiArticleHealthResponse = GetApiArticleHealthResponses[keyof GetApiArticleHealthResponses];
+
 export type PostApiArticleGenerateData = {
     body?: ArticleRequest;
-    headers: {
-        /**
-         * API Key untuk autentikasi
-         */
-        'x-api-key': string;
-    };
     path?: never;
     query?: never;
     url: '/api/article/generate';
@@ -246,7 +355,7 @@ export type PostApiArticleGenerateData = {
 
 export type PostApiArticleGenerateErrors = {
     /**
-     * Validasi Gagal
+     * Validation Failed
      */
     400: {
         error: string;
@@ -267,7 +376,7 @@ export type PostApiArticleGenerateError = PostApiArticleGenerateErrors[keyof Pos
 
 export type PostApiArticleGenerateResponses = {
     /**
-     * Request diterima dan masuk antrian
+     * Request accepted and added to queue
      */
     202: SuccessArticleResponse;
 };

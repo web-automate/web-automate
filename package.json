@@ -6,6 +6,7 @@
     "dev": "turbo run dev",
     "dev:client": "turbo run dev --filter client",
     "dev:builder": "turbo run dev --filter builder",
+    "dev:scraper": "turbo run dev --filter scraper",
     "build": "turbo run build",
     "db:gen": "pnpm --filter @repo/database gen",
     "db:migrate": "pnpm --filter @repo/database db:migrate",

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { RabbitMQService } from "@/lib/services/rabbitmq/producer";
 import { BuildTypeWebsitePayload, prisma, WebsiteStatus } from "@repo/database";
+import { queueName } from "@repo/types";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -45,34 +46,57 @@ export async function PATCH(
     const { id: websiteId } = await params;
     const body = await req.json();
 
+    const {
+      name,
+      domain,
+      status,
+      templateId,
+      themeConfig,
+      language,
+      logoSquare,
+      logoRectangle,
+      favicon,
+      ownerId,
+      googleAnalyticsId
+    } = body;
+
     const website = await prisma.website.update({
       where: {
         id: websiteId,
       },
       data: {
-        ...body,
+        name,
+        domain,
+        status,
+        templateId,
+        themeConfig,
+        language,
+        logoSquare,
+        logoRectangle,
+        favicon,
+        ownerId,
+        googleAnalyticsId
       },
     });
 
     if (website) {
-      const payload = {
+      const payload  = {
         websiteId: website.id,
-        action: body.type || BuildTypeWebsitePayload.BUILD_WEBSITE,
+        mode: body.type || BuildTypeWebsitePayload.BUILD_WEBSITE,
       };
 
       try {
-        await RabbitMQService.sendToQueue("build_website", payload);
-        console.log(`[QUEUE] Website ${website.id} queued with action: ${payload.action}`);
+        await RabbitMQService.sendToQueue(queueName.build, payload);
       } catch (queueError) {
-        console.error("[QUEUE_ERROR]", queueError);
+        console.error(queueError);
       }
-    } 
+    }
 
     return NextResponse.json(website);
   } catch (error) {
-    console.error("[WEBSITE_UPDATE_POST]", error);
+    console.error(error);
     return NextResponse.json(
-      { error: "Internal Server Error" }, 
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
@@ -115,7 +139,7 @@ export async function DELETE(
     };
 
     try {
-      await RabbitMQService.sendToQueue("delete_website", payload);
+      await RabbitMQService.sendToQueue(queueName.delete, payload);
       console.log(`[QUEUE] Website ${website.id} queued for deletion.`);
       
       await prisma.websiteLog.create({

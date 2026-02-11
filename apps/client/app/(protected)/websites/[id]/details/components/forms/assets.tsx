@@ -111,7 +111,7 @@ const AssetsForm = ({ form }: AssetsFormProps) => {
     uploadFormData.append("file", file);
 
     mutate({
-      id: website.id,
+      params: { id: website.id },
       body: uploadFormData,
     });
   };

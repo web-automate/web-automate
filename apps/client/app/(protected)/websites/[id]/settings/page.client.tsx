@@ -48,20 +48,23 @@ const WebsiteSettingsPageClient = ({ websiteId }: { websiteId: string }) => {
 
     const handleDelete = () => {
         mutate({
-            id: websiteId,
+            params: {
+                id: websiteId,
+            },
         });
     };
 
     const handleStatusChange = (status: WebsiteStatus) => {
         mutateStatus({
-            id: websiteId,
+            params: {
+                id: websiteId,
+            },
             body: {
                 status,
             },
         });
     };
 
-    console.log(website?.status);
     return (
         <Stack>
             <StatusWebsiteForm 

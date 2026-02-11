@@ -1,52 +1,72 @@
 import sharp from "sharp";
 
+type ProcessedImage = {
+  buffer: Buffer;
+  extension: string;
+  mime: string;
+};
+
 type ImageType = "logoSquare" | "logoRectangle" | "favicon" | string;
 
-export async function processImage(buffer: Buffer, type: ImageType): Promise<{ buffer: Buffer; extension: string; mime: string }> {
-  let transform = sharp(buffer);
-  
-  transform = transform.rotate();
+
+export async function processImage(
+  inputBuffer: Buffer,
+  type: ImageType
+): Promise<ProcessedImage> {
+  const image = sharp(inputBuffer);
 
   switch (type) {
+    case "favicon":
+      const faviconBuffer = await image
+        .resize(32, 32, {
+          fit: "cover",
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .toFormat("png")
+        .toBuffer();
+
+      return {
+        buffer: faviconBuffer,
+        extension: "ico",
+        mime: "image/x-icon",
+      };
+
     case "logoSquare":
-      transform = transform.resize(120, 120, { 
-        fit: "inside", 
-        withoutEnlargement: true 
-      });
-      break;
+      const squareBuffer = await image
+        .resize(240, 240, {
+          fit: "contain",
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .webp({ quality: 85 })
+        .toBuffer();
+
+      return {
+        buffer: squareBuffer,
+        extension: "webp",
+        mime: "image/webp",
+      };
 
     case "logoRectangle":
-      transform = transform.resize(350, 75, { 
-        fit: "inside", 
-        withoutEnlargement: true 
-      });
-      break;
+      const rectBuffer = await image
+        .resize(700, 150, {
+          fit: "contain",
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .webp({ quality: 85 })
+        .toBuffer();
 
-    case "favicon":
-      transform = transform.resize(48, 48, { 
-        fit: "contain", 
-        background: { r: 0, g: 0, b: 0, alpha: 0 } 
-      });
-      break;
-      
+      return {
+        buffer: rectBuffer,
+        extension: "webp",
+        mime: "image/webp",
+      };
+
     default:
-      transform = transform.resize(1200, null, { 
-        withoutEnlargement: true 
-      });
-      break;
+      const defaultBuffer = await image.webp().toBuffer();
+      return {
+        buffer: defaultBuffer,
+        extension: "webp",
+        mime: "image/webp",
+      };
   }
-
-  const processedBuffer = await transform
-    .png({ 
-      quality: 80, 
-      compressionLevel: 9,
-      palette: true
-    })
-    .toBuffer();
-
-  return {
-    buffer: processedBuffer,
-    extension: type === "favicon" ? "ico" : "webp",
-    mime: type === "favicon" ? "image/x-icon" : "image/webp"
-  };
 }

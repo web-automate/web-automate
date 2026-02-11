@@ -10,8 +10,6 @@ const SettingsPage = async () => {
         console.error("Failed to fetch AI configuration", error);
       }
 
-      console.log("AI Configurations:", aiData);
-
     return (
         <SettingsPageClient aiConfig={aiData ? aiData : undefined} />    
     );

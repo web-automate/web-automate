@@ -4,15 +4,16 @@ import { ModularModal } from '@/app/(protected)/components/modal';
 import { useClientApi } from '@/lib/hooks/client.api';
 import {
     ActionIcon,
-    Avatar, // 1. Tambahkan Import Avatar
-    Button, Group,
+    Avatar,
+    Box,
+    Button,
+    Group,
     Menu,
     Paper,
     Stack,
-    Table,
     Text,
-    TextInput, Textarea,
-    Title
+    TextInput,
+    Textarea
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { Author } from '@repo/database';
@@ -31,7 +32,7 @@ export default function AuthorsPageClient({ websiteId, initialData }: AuthorsPag
     const authors = initialData;
 
     const { mutate: createMutate, isPending: createIsPending } = Mutate<Author, any>(
-        `/api/websites/${websiteId}/authors`,
+        `/api/websites/{websiteId}/authors`,
         { method: 'POST' },
         {
             onSuccess: () => {
@@ -43,7 +44,7 @@ export default function AuthorsPageClient({ websiteId, initialData }: AuthorsPag
     );
 
     const deleteMutation = Mutate<void, string>(
-        `/api/authors`,
+        `/api/websites/{websiteId}/authors/{author-id}`,
         { method: 'DELETE' },
         {
             invalidateKeys: [['websites', websiteId, 'authors']]
@@ -63,51 +64,70 @@ export default function AuthorsPageClient({ websiteId, initialData }: AuthorsPag
     });
 
     const handleCreate = (values: typeof createForm.values) => {
-        createMutate(values);
+        createMutate({
+            params: { id: websiteId },
+            body: values
+        });
     };
 
     const handleDelete = (id: string) => {
         if (confirm('Are you sure you want to delete this author?')) {
-            deleteMutation.mutate(id);
+            deleteMutation.mutate({
+                params: {
+                    id: websiteId,
+                    "author-id": id
+                }
+            });
         }
     };
 
-    const rows = authors?.map((author: Author) => (
-        <Table.Tr key={author.id}>
-            <Table.Td>
-                <Group gap="sm">
+    const renderAuthorCard = (author: Author) => (
+        <Paper key={author.id} withBorder p="md" radius="md">
+            <Group justify="space-between" align="center" wrap="nowrap">
+                <Group gap="sm" style={{ flex: 1, minWidth: 0 }}>
                     <Avatar
                         src={author.image}
-                        name={author.name}
-                        alt={author.name}
                         radius="xl"
                         color="blue"
-                    />
-                    <Text fz="sm" fw={500}>
-                        {author.name}
-                    </Text>
+                        size="md"
+                    >
+                        {author.name.substring(0, 2).toUpperCase()}
+                    </Avatar>
+                    <Box style={{ flex: 1, minWidth: 0 }}>
+                        <Text fz="sm" fw={600} truncate="end">
+                            {author.name}
+                        </Text>
+                        <Text fz="xs" c="dimmed" truncate="end">
+                            @{author.slug}
+                        </Text>
+                    </Box>
                 </Group>
-            </Table.Td>
 
-            <Table.Td>
-                <Text fz="sm" c="dimmed">
-                    {author.slug}
-                </Text>
-            </Table.Td>
-
-            <Table.Td>
-                <Group gap={0} justify="flex-end">
-                    <ActionIcon component={Link} href={`/websites/${websiteId}/authors/${author.id}`} variant="subtle" color="gray">
-                        <IconEdit size={16} />
+                <Group gap={4}>
+                    <ActionIcon
+                        component={Link}
+                        href={`/websites/${websiteId}/authors/${author.id}`}
+                        variant="subtle"
+                        color="gray"
+                        size="md"
+                    >
+                        <IconEdit size={18} />
                     </ActionIcon>
+
                     <Menu shadow="md" width={200} position="bottom-end">
                         <Menu.Target>
-                            <ActionIcon variant="subtle" color="gray">
-                                <IconDotsVertical size={16} />
+                            <ActionIcon variant="subtle" color="gray" size="md">
+                                <IconDotsVertical size={18} />
                             </ActionIcon>
                         </Menu.Target>
                         <Menu.Dropdown>
-                            <Menu.Item leftSection={<IconExternalLink size={14} />} disabled={!author.websiteUrl}>
+                            <Menu.Item
+                                leftSection={<IconExternalLink size={14} />}
+                                component="a"
+                                href={author.websiteUrl || '#'}
+                                target="_blank"
+                                disabled={!author.websiteUrl}
+                            >
                                 Visit Website
                             </Menu.Item>
                             <Menu.Divider />
@@ -116,64 +136,63 @@ export default function AuthorsPageClient({ websiteId, initialData }: AuthorsPag
                                 leftSection={<IconTrash size={14} />}
                                 onClick={() => handleDelete(author.id)}
                             >
-                                Delete
+                                Delete Author
                             </Menu.Item>
                         </Menu.Dropdown>
                     </Menu>
                 </Group>
-            </Table.Td>
-        </Table.Tr>
-    ));
+            </Group>
+        </Paper>
+    );
 
     return (
-        <Stack gap="lg">
-            <Group justify="space-between" align="center">
-                <div>
-                    <Title order={2}>Authors</Title>
-                    <Text c="dimmed" size="sm">Manage authors for this website</Text>
-                </div>
-                <Button leftSection={<IconPlus size={16} />} onClick={() => setOpened(true)}>
+        <Stack gap="lg" p="xs">
+            <Stack gap="xs">
+                <Button
+                    fullWidth
+                    leftSection={<IconPlus size={18} />}
+                    onClick={() => setOpened(true)}
+                    radius="md"
+                    mt="xs"
+                >
                     Add Author
                 </Button>
-            </Group>
+            </Stack>
 
-            <Paper withBorder p="md" radius="md">
-                <Table verticalSpacing="sm">
-                    <Table.Thead>
-                        <Table.Tr>
-                            <Table.Th>Author</Table.Th>
-                            <Table.Th>Slug</Table.Th>
-                            <Table.Th style={{ width: 100 }} />
-                        </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>{rows}</Table.Tbody>
-                </Table>
-                {authors?.length === 0 && (
-                    <Text ta="center" py="xl" c="dimmed">No authors found.</Text>
+            <Stack gap="sm">
+                {authors?.length > 0 ? (
+                    authors.map(renderAuthorCard)
+                ) : (
+                    <Paper withBorder p="xl" radius="md" bg="gray.0">
+                        <Text ta="center" size="sm" c="dimmed">No authors found.</Text>
+                    </Paper>
                 )}
-            </Paper>
+            </Stack>
 
             <ModularModal
                 isLoading={createIsPending}
-                opened={opened} onClose={() => setOpened(false)}
+                opened={opened}
+                onClose={() => setOpened(false)}
                 onSubmit={createForm.onSubmit(handleCreate)}
-                title="Add New Author">
-                <Stack>
+                title="Add New Author"
+            >
+                <Stack gap="sm">
                     <TextInput
                         label="Name"
-                        placeholder="John Doe"
+                        placeholder="e.g. John Doe"
                         required
                         {...createForm.getInputProps('name')}
                     />
                     <TextInput
                         label="Slug"
-                        placeholder="john-doe"
+                        placeholder="e.g. john-doe"
                         required
                         {...createForm.getInputProps('slug')}
                     />
                     <Textarea
                         label="Bio"
-                        placeholder="Short bio..."
+                        placeholder="Brief description about the author..."
+                        minRows={3}
                         {...createForm.getInputProps('bio')}
                     />
                 </Stack>

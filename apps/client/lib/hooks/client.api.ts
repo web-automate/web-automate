@@ -3,20 +3,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetcher } from "../utils/api";
 
-const buildUrlWithParams = (url: string, params: any) => {
-  const regex = /{([a-zA-Z0-9_-]+)}/g;
+const buildUrlWithParams = (url: string, params?: Record<string, string | number>) => {
+  if (!params) return url;
+  
+  return url.replace(/{([a-zA-Z0-9_-]+)}/g, (match, key) => {
+    return params[key] !== undefined ? String(params[key]) : match;
+  });
+};
 
-  if (typeof params === 'string' || typeof params === 'number') {
-    return url.replace(regex, String(params));
-  }
+type MutateConfig = {
+  method?: 'POST' | 'PATCH' | 'DELETE' | 'PUT';
+  headers?: Record<string, string>;
+};
 
-  if (typeof params === 'object' && params !== null) {
-    return url.replace(regex, (match, key) => {
-      return params[key] !== undefined ? String(params[key]) : match;
-    });
-  }
+type MutateCallbacks<TData> = {
+  onSuccess?: (data: TData) => void;
+  onError?: (error: Error) => void;
+  invalidateKeys?: any[][];
+};
 
-  return url;
+type MutationVariables<TBody> = {
+  params?: Record<string, string | number>;
+  method?: 'POST' | 'PATCH' | 'DELETE' | 'PUT';
+  body?: TBody;
 };
 
 export const useClientApi = () => {
@@ -31,39 +40,28 @@ export const useClientApi = () => {
       });
     },
 
-    Mutate: <TData, TVariables>(
+    Mutate: <TData, TBody = unknown>(
       url: string,
-      config?: { method?: 'POST' | 'PATCH' | 'DELETE' | 'PUT'; headers?: Record<string, string> },
-      callbacks?: {
-        onSuccess?: (data: TData) => void;
-        onError?: (error: any) => void;
-        invalidateKeys?: any[][];
-      }
+      config?: MutateConfig,
+      callbacks?: MutateCallbacks<TData>
     ) => {
-      return useMutation<TData, Error, TVariables>({
-        mutationFn: (variables: any) => {
-          const finalUrl = buildUrlWithParams(url, variables.id);
-          let requestBody = variables.body;
-
-          if (config?.method === 'DELETE') {
-            if (typeof variables === 'string' || typeof variables === 'number') {
-              requestBody = undefined;
-            }
-          }
+      return useMutation<TData, Error, MutationVariables<TBody>>({
+        mutationFn: async ({ params, method, body }) => {
+          const finalUrl = buildUrlWithParams(url, params);
 
           return fetcher(finalUrl, {
-            method: config?.method || variables.method,
-            body: requestBody,
+            method: method || config?.method || 'POST',
+            body: body,
             headers: {
               'Content-Type': 'application/json',
               ...config?.headers,
               'x-api-key': process.env.API_KEY || '',
-            }
+            },
           });
         },
         onSuccess: (data) => {
           if (callbacks?.invalidateKeys) {
-            callbacks.invalidateKeys.forEach(key =>
+            callbacks.invalidateKeys.forEach((key) =>
               queryClient.invalidateQueries({ queryKey: key })
             );
           }
@@ -77,27 +75,23 @@ export const useClientApi = () => {
 
     MutateFile: <TData>(
       url: string,
-      callbacks?: {
-        onSuccess?: (data: TData) => void;
-        onError?: (error: any) => void;
-        invalidateKeys?: any[][];
-      }
+      callbacks?: MutateCallbacks<TData>
     ) => {
-      return useMutation<TData, Error, { body: FormData; id?: string | Record<string, any> }>({
-        mutationFn: (variables) => {
-          const finalUrl = buildUrlWithParams(url, variables.id);
+      return useMutation<TData, Error, { body: FormData; params?: Record<string, string | number> }>({
+        mutationFn: async ({ params, body }) => {
+          const finalUrl = buildUrlWithParams(url, params);
 
           return fetcher(finalUrl, {
             method: 'POST',
-            body: variables.body,
+            body: body,
             headers: {
               'x-api-key': process.env.API_KEY || '',
-            }
+            },
           });
         },
         onSuccess: (data) => {
           if (callbacks?.invalidateKeys) {
-            callbacks.invalidateKeys.forEach(key =>
+            callbacks.invalidateKeys.forEach((key) =>
               queryClient.invalidateQueries({ queryKey: key })
             );
           }
@@ -107,6 +101,6 @@ export const useClientApi = () => {
           callbacks?.onError?.(error);
         },
       });
-    }
+    },
   };
 };

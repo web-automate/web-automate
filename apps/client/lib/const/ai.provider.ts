@@ -1,12 +1,12 @@
 export const AiProvider = {
-  ANTHROPIC: 'anthropic',
-  OPENAI: 'openai',
+  // ANTHROPIC: 'anthropic',
+  // OPENAI: 'openai',
   GOOGLE: 'google',
-  GROQ: 'groq',
-  DEEPSEEK: 'deepseek',
-  MISTRAL: 'mistral',
-  OPENROUTER: 'openrouter',
-  LOCAL: 'local'
+  // GROQ: 'groq',
+  // DEEPSEEK: 'deepseek',
+  // MISTRAL: 'mistral',
+  // OPENROUTER: 'openrouter',
+  // LOCAL: 'local'
 } as const;
 
 export type AiProviderType = typeof AiProvider[keyof typeof AiProvider];

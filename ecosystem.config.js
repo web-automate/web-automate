@@ -1,7 +1,7 @@
 export const apps = [
     {
         name: "cms-client",
-        script: "npm",
+        script: "pnpm",
         args: "start",
         cwd: "./apps/client",
         env: {
@@ -10,12 +10,23 @@ export const apps = [
         }
     },
     {
+        name: "scraper",
+        script: "pnpm",
+        args: "start",
+        cwd: "./apps/scraper",
+        env: {
+            NODE_ENV: "production",
+            PORT: 3002
+        }
+    },
+    {
         name: "cms-worker",
         script: "pnpm", 
         args: "start",
         cwd: "./apps/builder",
         env: {
-            NODE_ENV: "production"
+            NODE_ENV: "production",
+            PORT: 3001
         }
     }
 ];

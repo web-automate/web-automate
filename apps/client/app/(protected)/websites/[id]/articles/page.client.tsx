@@ -6,17 +6,16 @@ import { useClientApi } from "@/lib/hooks/client.api";
 import {
     ActionIcon,
     Badge,
+    Box,
     Button,
-    em,
+    Divider,
     Group,
     Paper,
     Stack,
-    Table,
     Text,
-    TextInput,
-    Tooltip
+    TextInput
 } from "@mantine/core";
-import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { useDisclosure } from "@mantine/hooks";
 import { Article } from "@repo/database";
 import { IconExternalLink, IconPlus, IconReload, IconSearch, IconSettings, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
@@ -37,6 +36,19 @@ const getStatusBadgeColor = (status: string) => {
     return statusColors[status as keyof typeof statusColors] || 'gray';
 };
 
+const getIconStatus = (status: string) => {
+    const statusIcons = {
+        'INITIAL': IconSettings,
+        'DRAFT': IconPlus,
+        'PUBLISHED': IconExternalLink,
+        'ARCHIVED': IconReload,
+        'BUILDING': IconReload,
+        'FAILED': IconReload,
+        'WAITING_IMAGE': IconReload
+    };
+    return statusIcons[status as keyof typeof statusIcons] || IconReload;
+};
+
 export function ArticlesClient({
     websiteId,
 }: {
@@ -46,12 +58,16 @@ export function ArticlesClient({
     const [opened, { open, close }] = useDisclosure(false);
     const [regenerateOpened, { open: openRegenerate, close: closeRegenerate }] = useDisclosure(false);
     const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
-    const isMobile = useMediaQuery(`(max-width: ${em(768)})`);
     const { push } = useRouter();
 
     const { data: articles, isLoading } = api.Get<Article[]>(
         `/api/websites/${websiteId}/articles`,
         ['articles', websiteId],
+    );
+
+    const { data: domain } = api.Get<{ domain: string }>(
+        `/api/websites/${websiteId}/domain`,
+        ['domain', websiteId],
     );
 
     const { mutate: deleteMutate } = api.Mutate(
@@ -71,138 +87,149 @@ export function ArticlesClient({
 
     const handleDelete = (articleId: string) => {
         if (confirm("Are you sure you want to delete this article?")) {
-            deleteMutate({ id: {id: websiteId, "article-id": articleId} });
+            deleteMutate({
+                params: {
+                    id: websiteId,
+                    "article-id": articleId
+                }
+            });
         }
     }
 
-    const rows = articles?.map((article: Article) => (
-        <Table.Tr key={article.id}>
-            <Table.Td>
-                <Text fw={500} size="xs" lineClamp={1} truncate>{article.id}</Text>
-                <Text size="xs" c="dimmed" lineClamp={1}>{article.slug}</Text>
-            </Table.Td>
-            <Table.Td>
-                <Badge
-                    color={getStatusBadgeColor(article.status)}
-                    variant="light"
-                >
-                    {article.status}
-                </Badge>
-            </Table.Td>
-            <Table.Td style={{ display: isMobile ? "none" : "table-cell" }}>
-                <Text size="xs">{new Date(article.createdAt).toLocaleDateString()}</Text>
-            </Table.Td>
-            <Table.Td>
-                <Group gap={4} justify="flex-end">
-                    <Tooltip label="Visit article">
-                        <ActionIcon
-                            variant="subtle"
-                            color="gray"
-                            style={{
-                                display: article.status !== 'PUBLISHED' ? 'none' : 'flex'
-                            }}
+    const renderArticleCard = (article: Article) => {
+        const StatusIcon = getIconStatus(article.status);
+
+        return (
+            <Paper
+                key={article.id}
+                withBorder
+                p="md"
+                radius="md"
+                shadow="xs"
+                style={{ transition: 'transform 0.2s ease' }}
+            >
+                <Stack gap="sm">
+                    <Group justify="space-between" align="flex-start" wrap="nowrap">
+                        <Box style={{ flex: 1, minWidth: 0 }}>
+                            <Text
+                                fw={600}
+                                size="sm"
+                                truncate="end"
+                                onClick={() => push(`/websites/${websiteId}/articles/${article.id}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                {article.id}
+                            </Text>
+                            <Text size="xs" c="dimmed" truncate="end">
+                                {article.slug}
+                            </Text>
+                        </Box>
+                        <Badge
+                            color={getStatusBadgeColor(article.status)}
+                            variant="light"
+                            leftSection={<StatusIcon size={12} />}
+                            size="sm"
                         >
-                            <IconExternalLink size={16} />
-                        </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Regenerate article">
-                        <ActionIcon
-                            variant="subtle"
-                            color="orange"
-                            style={{
-                                display: article.status === 'FAILED' ? 'flex' : 'none'
-                            }}
-                            onClick={() => {
-                                setSelectedArticle(article.id);
-                                openRegenerate();
-                            }}
-                        >
-                            <IconReload size={16} />
-                        </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Edit article">
-                        <ActionIcon
-                            variant="subtle"
-                            color="blue"
-                            style={{
-                                display: article.status === 'FAILED' || article.status === 'INITIAL' || article.status === 'BUILDING' ? 'none' : 'flex'
-                            }}
-                            onClick={() => push(`/websites/${websiteId}/articles/${article.id}`)}
-                        >
-                            <IconSettings size={16} />
-                        </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Delete article">
-                        <ActionIcon
-                            onClick={() => handleDelete(article.id)}
-                            variant="subtle"
-                            color="red"
-                            style={{
-                                display: article.status === 'BUILDING' ? 'none' : 'flex'
-                            }}
-                        >
-                            <IconTrash size={16} />
-                        </ActionIcon>
-                    </Tooltip>
-                </Group>
-            </Table.Td>
-        </Table.Tr>
-    ));
+                            {article.status}
+                        </Badge>
+                    </Group>
+
+                    <Divider variant="dashed" />
+
+                    <Group justify="space-between" align="center">
+                        <Text size="xs" c="dimmed">
+                            {new Date(article.createdAt).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                            })}
+                        </Text>
+
+                        <Group gap={8}>
+                            <ActionIcon
+                                variant="light"
+                                color="gray"
+                                size="md"
+                                onClick={() => window.open(`https://${domain?.domain}/${article.slug}`, '_blank')}
+                                style={{ display: article.status !== 'PUBLISHED' ? 'none' : 'flex' }}
+                            >
+                                <IconExternalLink size={16} />
+                            </ActionIcon>
+
+                            <ActionIcon
+                                variant="light"
+                                color="orange"
+                                size="md"
+                                style={{ display: article.status === 'FAILED' ? 'flex' : 'none' }}
+                                onClick={() => {
+                                    setSelectedArticle(article.id);
+                                    openRegenerate();
+                                }}
+                            >
+                                <IconReload size={16} />
+                            </ActionIcon>
+
+                            <ActionIcon
+                                variant="light"
+                                color="blue"
+                                size="md"
+                                onClick={() => push(`/websites/${websiteId}/articles/${article.id}`)}
+                                style={{
+                                    display: ['FAILED', 'INITIAL', 'BUILDING'].includes(article.status) ? 'none' : 'flex'
+                                }}
+                            >
+                                <IconSettings size={16} />
+                            </ActionIcon>
+
+                            <ActionIcon
+                                onClick={() => handleDelete(article.id)}
+                                variant="light"
+                                color="red"
+                                size="md"
+                                style={{ display: article.status === 'BUILDING' ? 'none' : 'flex' }}
+                            >
+                                <IconTrash size={16} />
+                            </ActionIcon>
+                        </Group>
+                    </Group>
+                </Stack>
+            </Paper>
+        );
+    };
 
     return (
-        <Stack gap="md">
-            <Group justify="space-between">
-                <Group gap={4}>
-                    <TextInput
-                        placeholder="Search articles"
-                        radius="md"
-                        w={140}
-                    />
-                    <Button
-                        radius="md"
-                        color={"orange.5"}
-                        variant="filled"
-                    >
-                        <IconSearch size={16} />
-                    </Button>
-                </Group>
+        <Stack gap="lg" p="xs">
+            <Stack gap="sm">
+                <TextInput
+                    placeholder="Search articles..."
+                    radius="md"
+                    size="md"
+                    leftSection={<IconSearch size={18} stroke={1.5} />}
+                />
                 <Button
                     onClick={open}
-                    leftSection={<IconPlus size={16} />}
-                    radius="md">
-                    New
+                    fullWidth
+                    size="md"
+                    leftSection={<IconPlus size={20} />}
+                    radius="md"
+                >
+                    Create New Article
                 </Button>
-            </Group>
+            </Stack>
 
-            <Paper withBorder radius="md" p={0} style={{ overflow: 'hidden' }}>
-                <Table verticalSpacing="sm" highlightOnHover>
-                    <Table.Thead>
-                        <Table.Tr>
-                            <Table.Th>Article</Table.Th>
-                            <Table.Th>Status</Table.Th>
-                            <Table.Th>Created At</Table.Th>
-                            <Table.Th />
-                        </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                        {isLoading ? (
-                            <Table.Tr>
-                                <Table.Td colSpan={4}>
-                                    <LoaderComponent height="10dvh" />
-                                </Table.Td>
-                            </Table.Tr>
-                        ) : (
-                            rows && rows.length > 0 ? rows : (
-                                <Table.Tr>
-                                    <Table.Td colSpan={4}>
-                                        <Text c="dimmed" ta="center" py="xl">No articles found.</Text>
-                                    </Table.Td>
-                                </Table.Tr>
-                            )
-                        )}
-                    </Table.Tbody>
-                </Table>
-            </Paper>
+            <Stack gap="md">
+                {isLoading ? (
+                    <LoaderComponent height="20dvh" />
+                ) : (
+                    articles && articles.length > 0 ? (
+                        articles.map(renderArticleCard)
+                    ) : (
+                        <Paper withBorder p="xl" radius="md">
+                            <Text c="dimmed" ta="center">No articles found.</Text>
+                        </Paper>
+                    )
+                )}
+            </Stack>
 
             <RegenerateArticleModal
                 opened={regenerateOpened}

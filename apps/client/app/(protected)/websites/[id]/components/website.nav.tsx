@@ -1,5 +1,7 @@
 'use client';
-import { rem, ScrollArea, Tabs } from '@mantine/core';
+
+import { Burger, Drawer, NavLink, rem } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { IconArticle, IconFileCode, IconInfoCircle, IconSeo, IconSettings, IconTerminal2 } from '@tabler/icons-react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
@@ -7,67 +9,50 @@ export function WebsiteNavigation() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-
-  const tabs = ['details', 'articles', 'authors', 'pages', 'seo', 'logs', 'settings'];
-  
-  const activeTab = tabs.find(tab => pathname.includes(`/${tab}`)) || 'details';
+  const [opened, { open, close }] = useDisclosure(false);
 
   const iconStyle = { width: rem(16), height: rem(16) };
 
-  const handleTabChange = (value: string | null) => {
-    if (value) {
-      router.push(`/websites/${params.id}/${value}`);
-    }
+  const navItems = [
+    { label: 'Details', value: 'details', icon: IconInfoCircle },
+    { label: 'Articles', value: 'articles', icon: IconArticle },
+    { label: 'Authors', value: 'authors', icon: IconFileCode },
+    { label: 'Pages', value: 'pages', icon: IconFileCode },
+    { label: 'SEO', value: 'seo', icon: IconSeo },
+    { label: 'Logs', value: 'logs', icon: IconTerminal2 },
+    { label: 'Settings', value: 'settings', icon: IconSettings },
+  ];
+
+  const activeTab = navItems.find(item => pathname.includes(`/${item.value}`))?.value || 'details';
+
+  const handleNavigate = (value: string) => {
+    router.push(`/websites/${params.id}/${value}`);
+    close();
   };
 
   return (
-    <ScrollArea scrollbars="x" offsetScrollbars={false} type="never">
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        variant="pills"
-        radius="md"
-        styles={(theme) => ({
-          tab: {
-            fontWeight: 500,
-            padding: `${theme.spacing.xs} ${theme.spacing.md}`,
-            whiteSpace: 'nowrap',
-            '&[dataActive]': {
-              backgroundColor: theme.colors.blue[6],
-              color: theme.white,
-            },
-          },
-          list: {
-            borderBottom: `1px solid ${theme.colors.gray[2]}`,
-            paddingBottom: theme.spacing.xs,
-            flexWrap: 'nowrap',
-          }
-        })}
+    <>
+      <Burger opened={opened} onClick={open} aria-label="Toggle navigation" size="sm" />
+      
+      <Drawer 
+        opened={opened} 
+        onClose={close} 
+        title="Menu"
+        padding="md"
+        size="xs"
+        zIndex={999}
       >
-        <Tabs.List>
-          <Tabs.Tab value="details" leftSection={<IconInfoCircle style={iconStyle} />}>
-            Details
-          </Tabs.Tab>
-          <Tabs.Tab value="articles" leftSection={<IconArticle style={iconStyle} />}>
-            Articles
-          </Tabs.Tab>
-          <Tabs.Tab value="authors" leftSection={<IconFileCode style={iconStyle} />}>
-            Authors
-          </Tabs.Tab>
-          <Tabs.Tab value="pages" leftSection={<IconFileCode style={iconStyle} />}>
-            Pages
-          </Tabs.Tab>
-          <Tabs.Tab value="seo" leftSection={<IconSeo style={iconStyle} />}>
-            SEO
-          </Tabs.Tab>
-          <Tabs.Tab value="logs" leftSection={<IconTerminal2 style={iconStyle} />}>
-            Logs
-          </Tabs.Tab>
-          <Tabs.Tab value="settings" leftSection={<IconSettings style={iconStyle} />}>
-            Settings
-          </Tabs.Tab>
-        </Tabs.List>
-      </Tabs>
-    </ScrollArea>
+        {navItems.map((item) => (
+          <NavLink
+            key={item.value}
+            active={activeTab === item.value}
+            label={item.label}
+            leftSection={<item.icon style={iconStyle} />}
+            onClick={() => handleNavigate(item.value)}
+            variant="filled"
+          />
+        ))}
+      </Drawer>
+    </>
   );
 }

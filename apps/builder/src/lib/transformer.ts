@@ -9,6 +9,7 @@ export const HugoTransformer = {
   toFrontmatter(article: ArticleWithRelations) {
     return {
       id: article.id,
+      draft: article.status === "DRAFT",
       title: article.title || article.topic,
       date: article.publishedAt || article.createdAt,
       authorId: article.author?.id || "123",

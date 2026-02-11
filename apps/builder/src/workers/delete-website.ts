@@ -1,17 +1,17 @@
-import { env } from 'node:process';
+import { queueName } from '@repo/types';
 import { getRabbitMQ } from '../lib/rabbitmq';
 import { DeleteWebsiteService } from '../services/delete-website';
 
-export async function startDeleteWorker() {
+export async function startDeleteWebsiteWorker() {
   const { channel } = await getRabbitMQ();
-  const queueName = env.DELETE_QUEUE_NAME || 'delete_website';
+  const que = queueName.delete || 'delete_website';
   
-  await channel.assertQueue(queueName, { durable: true });
+  await channel.assertQueue(que, { durable: true });
   channel.prefetch(1);
 
-  console.log(`[*] Delete Worker listening: ${queueName}`);
+  console.log(`[*] Delete Worker listening: ${que}`);
 
-  channel.consume(queueName, async (msg) => {
+  channel.consume(que, async (msg) => {
     if (!msg) return;
 
     try {

@@ -42,7 +42,7 @@ export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
   );
 
   const { mutate, isPending } = api.Mutate(
-    `/api/websites/${id}`,
+    `/api/websites/{id}`,
     { method: "PATCH" },
     {
       onSuccess: () => {
@@ -73,6 +73,11 @@ export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
       ownerId: website?.ownerId ?? '',
       type: "BUILD_WEBSITE" as BuildTypeWebsitePayload,
     } as any,
+    validate: {
+      name: (value) => value.length > 0 || "Website name is required",
+      domain: (value) => value.length > 0 || "Website domain is required",
+      templateId: (value) => value.length > 0 || "Website template is required",
+    },
   });
 
   useEffect(() => {
@@ -86,7 +91,12 @@ export default function WebsiteManageClient({ id }: WebsiteManageClientProps) {
   if (!website) return notFound();
 
   const handleSave = () => {
-    mutate(form.values);
+    mutate({
+      params: {
+        id: website.id,
+      },
+      body: form.values,
+    });
   };
 
   return (
