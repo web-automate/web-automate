@@ -2,13 +2,18 @@ import prisma from "@/lib/prisma";
 import { ArticleRequest, SuccessArticleResponse } from "@/lib/types/api";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string, "article-id": string }> }) {
+    const { id, "article-id": articleId } = await params;
+    return NextResponse.json({ message: "Regenerate article", websiteId: id, articleId }, { status: 200 });
+}
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string, "article-id": string }> }) {
   try {
-    const { id } = await params;
+    const { id, "article-id": articleId } = await params;
     const body = await req.json();
 
     const article = await prisma.article.findUnique({
-      where: { id: id },
+      where: { id: articleId },
     });
 
     if (!article) {

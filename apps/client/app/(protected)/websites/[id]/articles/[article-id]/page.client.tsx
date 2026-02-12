@@ -63,7 +63,7 @@ export function ArticleDetailClient({ article }: Props) {
     const api = useClientApi();
     const isMobile = useMediaQuery(`(max-width: ${em(768)})`);
 
-    const form = useForm<any>({
+    const form = useForm<Article>({
         initialValues: {
             ...article,
             topic: article.topic || '',

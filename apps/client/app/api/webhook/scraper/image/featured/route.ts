@@ -1,7 +1,6 @@
 import { r2Client } from "@/lib/helpers/r2";
 import prisma from "@/lib/prisma";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { ArticleStatus } from "@repo/database";
 import { GenerateStatusType } from "@repo/types";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
@@ -54,7 +53,6 @@ export async function POST(req: Request) {
     }
 
     const articleId = articleData?.id;
-    const imageIndex = articleData?.imageIndex;
 
     if (!articleId) {
       return NextResponse.json({ error: "Missing article ID" }, { status: 400 });
@@ -77,25 +75,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Article has no associated website" }, { status: 404 });
     }
 
-    const placeholderRegex = imageIndex !== undefined
-      ? new RegExp(`\\[image_location_${imageIndex}\\]`)
-      : /\[image_location_\d+\]/;
-
-    const match = article.content.match(placeholderRegex);
-
-    if (!match) {
-      console.warn(`[Webhook Image] Placeholder not found for article ${articleId}`);
-      return NextResponse.json({
-        success: true,
-        message: "Placeholder not found or image already embedded (Idempotent)"
-      });
-    }
-
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileExtension = file.type.split("/")[1] || "png";
     const websiteId = article.website.id; 
 
-    const fileName = `${NODE_ENV}/websites/${websiteId}/articles/${articleId}/${randomUUID()}.${fileExtension}`;
+    const fileName = `${NODE_ENV}/websites/${websiteId}/articles/${articleId}/featured-${randomUUID()}.${fileExtension}`;
 
     try {
       await r2Client.send(new PutObjectCommand({
@@ -111,18 +95,10 @@ export async function POST(req: Request) {
 
     const imagePath = `${process.env.R2_PUBLIC_DOMAIN}/${fileName}`;
 
-    let updatedContent = article.content;
-    const markdownImage = `\n\n![Article Image ${imageIndex || ''}](${imagePath})\n\n`;
-    updatedContent = updatedContent.replace(match[0], markdownImage);
-
-    const hasRemainingPlaceholders = /\[image_location_\d+\]/.test(updatedContent);
-    const newStatus = hasRemainingPlaceholders ? ArticleStatus.WAITING_IMAGE : ArticleStatus.DRAFT;
-
     await prisma.article.update({
       where: { id: articleId },
       data: {
-        content: updatedContent,
-        status: newStatus
+        featuredImage: imagePath,
       }
     });
 
@@ -131,7 +107,6 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       message: "Image uploaded and embedded successfully",
-      currentStatus: newStatus,
       imageUrl: imagePath
     });
 

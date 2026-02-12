@@ -234,7 +234,8 @@ export function ArticlesClient({
             <RegenerateArticleModal
                 opened={regenerateOpened}
                 onClose={closeRegenerate}
-                articleId={selectedArticle}
+                articleId={selectedArticle!}
+                websiteId={websiteId}
             />
 
             <AddArticleModal

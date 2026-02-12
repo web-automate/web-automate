@@ -10,13 +10,15 @@ import { useState } from "react";
 interface RegenerateArticleModalProps {
     opened: boolean;
     onClose: () => void;
-    articleId: string | null;
+    articleId: string;
+    websiteId: string;
 }
 
 const RegenerateArticleModal = ({
     opened,
     onClose,
     articleId,
+    websiteId,
 
 }: RegenerateArticleModalProps) => {
     const [withImage, setWithImage] = useState(false);
@@ -30,7 +32,7 @@ const RegenerateArticleModal = ({
     });
 
     const { mutate: regenerateMutate, isPending: isRegenerating } = api.Mutate(
-        `/api/articles/{id}/regenerate`,
+        `/api/websites/{id}/articles/{article-id}/regenerate`,
         { method: "POST" },
         {
             onSuccess: () => {
@@ -44,7 +46,13 @@ const RegenerateArticleModal = ({
     );
 
     const handleRegenerate = () => {
-        regenerateMutate({ id: articleId, body: { ...form.values } })
+        regenerateMutate({
+            params: {
+                id: websiteId,
+                "article-id": articleId
+            },
+            body: { ...form.values }
+        })
         onClose();
     }
 
