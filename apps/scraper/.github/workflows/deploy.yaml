@@ -1,0 +1,51 @@
+name: Deploy Scraper to VPS
+
+on:
+  push:
+    branches: [ "main" ] # Trigger saat push ke branch main
+
+jobs:
+  deploy:
+    name: Build & Restart PM2
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: 22
+        script: |
+          # 1. Masuk ke direktori project
+          cd /root/hazart/scraper-v2 || exit
+
+          # 2. Pull code terbaru
+          echo "⬇️ Pulling latest changes..."
+          git pull origin main
+
+          # 3. Install dependency & Build (Pastikan pnpm ada di path)
+          echo "📦 Installing dependencies..."
+          pnpm install
+          
+          echo "🔨 Building project..."
+          pnpm build
+
+          # 4. Cek Logic PM2 (Start atau Restart)
+          echo "🔄 Managing PM2 Service..."
+          
+          # Cek apakah service dengan nama "scraper" sudah ada di list PM2
+          if pm2 describe scraper > /dev/null 2>&1; then
+              echo "✅ Service 'scraper' ditemukan. Melakukan Restart..."
+              pm2 restart scraper --update-env
+          else
+              echo "🚀 Service 'scraper' belum ada. Melakukan Start awal..."
+              # Start baru (menjalankan dist/index.js)
+              pm2 start dist/index.js --name "scraper" --env production
+              
+              # Simpan state agar jalan saat reboot
+              pm2 save
+          fi
+
+          echo "🎉 Deployment Success!"

@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": [
+    "src/**/*.test.ts",
+    "chrome_data_prod/**",
+    "sessions/**",
+    "data/**",
+    "node_modules/**"
+  ],
+  "exec": "npm run swagger && ts-node src/index.ts"
+}
