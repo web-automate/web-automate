@@ -5,6 +5,7 @@
   "types": "./index.ts",
   "scripts": {
     "gen": "prisma-import -s \"prisma/schema/*.prisma\" -o prisma/schema.prisma && prisma generate",
+    "build": "pnpm gen",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",

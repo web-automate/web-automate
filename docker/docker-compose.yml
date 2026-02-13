@@ -1,11 +1,11 @@
 services:
-  # ---------- Apps (build from monorepo image) ----------
+  # ---------- Apps (satu Dockerfile per app, env tetap satu .env) ----------
   client:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.client
       target: runner
-    image: web-automation:latest
+    image: web-automation-client:latest
     container_name: web-automation-client
     env_file: .env
     ports:
@@ -23,10 +23,13 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    command: ["pnpm", "--filter", "client", "start"]
 
   builder:
-    image: web-automation:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.builder
+      target: runner
+    image: web-automation-builder:latest
     container_name: web-automation-builder
     env_file: .env
     environment:
@@ -39,11 +42,13 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    working_dir: /app/apps/builder
-    command: ["node", "dist/index.js"]
 
   scraper:
-    image: web-automation:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.scraper
+      target: runner
+    image: web-automation-scraper:latest
     container_name: web-automation-scraper
     env_file: .env
     ports:
@@ -61,8 +66,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    working_dir: /app/apps/scraper
-    command: ["node", "dist/index.js"]
 
   # ---------- Infra (local dev) ----------
   postgres:
