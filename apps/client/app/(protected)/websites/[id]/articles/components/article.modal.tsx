@@ -51,7 +51,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
     const { data: website } = api.Get<Website>(
         `/api/websites/${websiteId}`,
         ['websites', websiteId],
-      );
+    );
 
     const form = useForm<ArticleModalFormValues>({
         initialValues: {
@@ -93,7 +93,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
             ...values,
             imageCount: withImage ? values.imageCount : 0
         };
-        mutate({id: websiteId, body: payload});
+        mutate({ params: { id: websiteId }, body: payload });
     };
 
     const handleAiGenerate = async (type: 'topic' | 'keywords') => {
@@ -158,9 +158,9 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
                         {...form.getInputProps('keywords')}
                         rightSection={
                             <Tooltip label="Generate Keywords with AI">
-                                <ActionIcon 
-                                    variant="subtle" 
-                                    color="grape" 
+                                <ActionIcon
+                                    variant="subtle"
+                                    color="grape"
                                     loading={isAiLoading}
                                     disabled={!form.values.topic}
                                     onClick={() => handleAiGenerate('keywords')}

@@ -115,6 +115,7 @@ export async function POST(req: Request) {
 Bergabunglah bersama **Web-Automate**.
           `.trim(),
               status: "PUBLISHED",
+              featuredImage: `https://cdn.misbakhul.my.id/automate-cms/0fbd9d73-6a43-496e-84a9-e747d734b848.webp`,
               publishedAt: new Date(),
               createdBy: {
                 connect: {

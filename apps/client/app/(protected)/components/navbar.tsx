@@ -2,8 +2,8 @@
 
 import { Box, Flex, Text, UnstyledButton, rem } from "@mantine/core";
 import { IconHome, IconSettings, IconWorld } from "@tabler/icons-react";
+import { LayoutGroup, motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
-import { motion, LayoutGroup } from 'framer-motion';
 
 const navMenu = [
     { label: 'Dashboard', Icon: IconHome, href: '/dashboard' },
@@ -68,7 +68,7 @@ export default function Navbar() {
                                 >
                                     {isActive && (
                                         <Box
-                                            component={motion.div}
+                                            component={motion.span} 
                                             layoutId="nav-bubble"
                                             style={{
                                                 position: 'absolute',
@@ -117,6 +117,7 @@ export default function Navbar() {
                                     </Box>
 
                                     <Text
+                                        component="span"
                                         size={rem(10)}
                                         fw={600}
                                         style={{

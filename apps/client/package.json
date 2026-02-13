@@ -9,8 +9,7 @@
     "generate": "pnpm --filter @repo/database gen && pnpm gen:api",
     "gen:api": "openapi-ts",
     "type-check": "tsc --noEmit",
-    "lint": "eslint",
-    "postinstall": "pnpm generate"
+    "lint": "eslint"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.13",

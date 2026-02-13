@@ -112,7 +112,7 @@ export function ArticleDetailClient({ article }: Props) {
     if (!article) return null;
 
     return (
-        <Container size="lg">
+        <Container size="lg" p={0}>
         <Notifications />
 
             <Stack gap="md">

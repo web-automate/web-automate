@@ -6,12 +6,10 @@ import * as fs from 'fs';
 import path from 'path';
 import { env } from '../config/env';
 import s3Client from '../helper/aws-client';
-import { getPublicImageUrl } from '../helper/cdn-url';
 import { promptContent, promptEditImage, promptImage } from '../lib/constants/prompt';
 import { queueNames } from '../lib/constants/queue-name';
 import { GenerateStatus } from '../lib/enum/status-response';
 import { extractArticleData } from '../lib/helper/article';
-import { production } from '../lib/node-env';
 import { ArticleRequest, ArticleWebhookResponse } from '../lib/schema/article';
 import { ImageRequest, ImageWebhookResponse } from '../lib/schema/image';
 import { Tone, TonePrompts } from '../lib/tone';
@@ -109,7 +107,7 @@ async function processImageJob(data: ImageRequest) {
 
     const payload: ImageWebhookResponse = {
       type: 'IMAGE',
-      imagePath: env.NODE_ENV == production ? getPublicImageUrl(imagePath) : imagePath,
+      imagePath: imagePath,
       status: GenerateStatus.COMPLETED,
       articleData: {
         id: data.articleData?.id,
@@ -259,14 +257,23 @@ async function sendWebhook(url: string, payload: any, withImage: boolean = false
       const form = new FormData();
 
       for (const [key, value] of Object.entries(payload)) {
-        if (key === 'imagePath' && typeof value === 'string' && fs.existsSync(value)) {
-          form.append('file', fs.createReadStream(value));
+        if (key === 'imagePath' && typeof value === 'string') {
+          const resolvedPath = path.resolve(value);
+          const ext = path.extname(resolvedPath).toLowerCase();
+          const contentType = ext === '.webp' ? 'image/webp' : 'image/png';
+
+          form.append('file', fs.createReadStream(resolvedPath), {
+            filename: path.basename(resolvedPath),
+            contentType,
+          });
         } else if (typeof value === 'object') {
           form.append(key, JSON.stringify(value));
         } else {
           form.append(key, String(value));
         }
       }
+
+      console.log(`[Webhook] Sending form data`)
 
       await axios.post(url, form, {
         headers: {
@@ -284,6 +291,6 @@ async function sendWebhook(url: string, payload: any, withImage: boolean = false
     }
     console.log('[Webhook] Sent successfully.');
   } catch (webhookError) {
-    console.error('[Webhook] Failed to send:', webhookError);
+    console.error('[Webhook] Failed to send:', (webhookError as Error).message);
   }
 }

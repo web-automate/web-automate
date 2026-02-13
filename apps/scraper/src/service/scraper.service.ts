@@ -15,9 +15,7 @@ export class AiScraperService {
   constructor() {
     this.repoRoot = process.cwd();
 
-    this.finalDir = process.env.NODE_ENV === 'production'
-      ? '/var/www/scraper-v2/content/images'
-      : path.join(this.repoRoot, 'content', 'images');
+    this.finalDir = path.join(this.repoRoot, 'content', 'images');
 
     this.editImageDir = path.join(this.finalDir, 'edit');
 
@@ -85,13 +83,13 @@ export class AiScraperService {
         require('fs').writeFileSync(outputPath, imageBuffer);
       }
 
-      const finalFilePath = await this.handleDownloadedFile(outputPath, this.editImageDir, imageMaxSizeKB, webpFormat);
+      const finalFilePath = await this.handleDownloadedFile(outputPath, this.finalDir, imageMaxSizeKB, webpFormat);
 
       const relativePath = path.relative(this.repoRoot, finalFilePath);
-      console.log(`[AiScraper] Image edit saved: ${relativePath}`);
+      console.log(`[AiScraper] Image saved: ${relativePath}`);
       return relativePath;
     } catch (error) {
-      console.error("[AiScraper] Image edit generation failed:", error);
+      console.error("[AiScraper] Image generation failed:", error);
       throw error;
     }
   }

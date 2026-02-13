@@ -11,7 +11,9 @@
     "db:gen": "pnpm --filter @repo/database gen",
     "db:migrate": "pnpm --filter @repo/database db:migrate",
     "db:seed": "pnpm --filter @repo/database db:seed",
-    "clean": "rm -rf node_modules **/node_modules pnpm-lock.yaml && pnpm install"
+    "clean": "rm -rf node_modules **/node_modules pnpm-lock.yaml && pnpm install",
+    "postinstall": "pnpm --filter @repo/database gen",
+    "type-check": "turbo run type-check"
   },
   "devDependencies": {
     "turbo": "latest",

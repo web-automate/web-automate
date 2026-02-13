@@ -20,7 +20,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let formData;
+    const contentType = req.headers.get("content-type") || "";
+
+    // Handle JSON payloads (e.g. status updates without a file attached)
+    if (!contentType.startsWith("multipart/form-data")) {
+      try {
+        const jsonBody = await req.json();
+        const status = jsonBody?.status as GenerateStatusType | undefined;
+
+        if (status === "generating") {
+          return NextResponse.json({ message: "Image generation is in progress" }, { status: 200 });
+        }
+
+        // For non-multipart requests that aren't simple status pings, just acknowledge.
+        return NextResponse.json({ message: "Ignored non-multipart webhook payload" }, { status: 200 });
+      } catch (e) {
+        console.error("[Webhook Image] Failed to parse JSON payload for non-multipart request:", e);
+        return NextResponse.json({ error: "Invalid non-multipart payload" }, { status: 400 });
+      }
+    }
+
+    let formData: FormData;
     try {
       formData = await req.formData();
     } catch (e) {
@@ -28,7 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid Form Data" }, { status: 400 });
     }
 
-    const file = formData.get("file");
+    const fileEntry = formData.get("file");
     const status = formData.get("status") as GenerateStatusType;
     const articleDataString = formData.get("articleData") as string;
 
@@ -36,10 +56,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Image generation is in progress" }, { status: 200 });
     }
 
-    if (!file || !(file instanceof File) || status !== "completed" || !articleDataString) {
+    const file = fileEntry as unknown as Blob | null;
+
+    // Only proceed when we have a real file (Blob), completed status, and article data.
+    if (!file || typeof file.arrayBuffer !== "function" || status !== "completed" || !articleDataString) {
       console.error("[Webhook Image] Missing or invalid data:", {
         hasFile: !!file,
-        isFileSize: file instanceof File ? file.size : 'N/A',
+        isFileSize: (file as any)?.size ?? "N/A",
         status,
         hasArticleData: !!articleDataString
       });
@@ -92,7 +115,7 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const fileExtension = file.type.split("/")[1] || "png";
+    const fileExtension = (file as any).type?.split("/")[1] || "png";
     const websiteId = article.website.id; 
 
     const fileName = `${NODE_ENV}/websites/${websiteId}/articles/${articleId}/${randomUUID()}.${fileExtension}`;
@@ -102,7 +125,7 @@ export async function POST(req: Request) {
         Bucket: process.env.R2_BUCKET_NAME,
         Key: fileName,
         Body: buffer,
-        ContentType: file.type,
+        ContentType: (file as any).type,
       }));
     } catch (s3Error: any) {
       console.error("[Webhook Image] S3 Upload Failed:", s3Error);

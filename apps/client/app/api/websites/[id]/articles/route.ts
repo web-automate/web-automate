@@ -36,6 +36,7 @@ export async function POST(req: Request) {
         websiteId,
         authorId,
         status: "INITIAL", 
+        publishedAt: new Date(),
       },
       include: { seo: true },
     });

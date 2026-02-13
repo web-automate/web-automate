@@ -26,15 +26,15 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string, "article-id": string }> }
 ) {
   try {
     const body: ArticleUpdateInput = await req.json();
     const { seo, ...articleData }: { seo?: Prisma.ArticleSeoUpdateOneWithoutArticleNestedInput } = body;
-    const { id } = await params;
+    const { id, "article-id": articleId } = await params;
 
     const updatedArticle = await prisma.article.update({
-      where: { id },
+      where: { id: articleId, websiteId: id },
       data: {
         ...articleData,
         seo: seo ? {
