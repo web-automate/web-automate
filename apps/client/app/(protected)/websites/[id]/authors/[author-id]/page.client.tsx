@@ -75,18 +75,18 @@ export default function AuthorDetailPageClient({ websiteId, authorId, initialDat
     }, [author]);
 
     const updateMutation = Mutate<Author, any>(
-        `/api/authors`,
+        `/api/websites/{websiteId}/authors`,
         { method: 'PATCH' },
         {
             onSuccess: (data: unknown) => {
                 console.log("Updated", data);
             },
-            invalidateKeys: [['authors', authorId], ['websites', websiteId, 'authors']]
+            invalidateKeys: [['websites', websiteId, 'authors', authorId], ['websites', websiteId, 'authors']]
         }
     );
 
     const handleSave = (values: typeof form.values) => {
-        updateMutation.mutate({ id: authorId, ...values });
+        updateMutation.mutate({ params: { id: websiteId, authorId }, ...values });
     };
 
     if (!author && !isLoading) return <Text>Author not found</Text>;

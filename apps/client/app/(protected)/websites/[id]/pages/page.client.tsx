@@ -226,8 +226,4 @@ const PagesPageClient = ({ websiteId, pages }: { websiteId: string, pages: Stati
     );
 }
 
-const Title = ({ order, children }: { order: number, children: React.ReactNode }) => (
-    <Text fw={700} size={order === 3 ? "xl" : "md"}>{children}</Text>
-);
-
 export default PagesPageClient;
