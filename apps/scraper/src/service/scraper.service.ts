@@ -37,28 +37,34 @@ export class AiScraperService {
 
     try {
       const page = await this.setupChatSession(prompt);
-
       console.log('[AiScraper] Waiting for response generation...');
       await page.waitForSelector(SCRAPER_CONFIG.VOICE_BTN_SELECTOR, {
         visible: true,
         timeout: 180000
       });
 
-      console.log('[AiScraper] Response ready. Finding copy button...');
-      await this.waitForCopyButton(page);
+      // Instead of relying on the Clipboard API (which often fails in
+      // headless/background contexts), read the last assistant message
+      // directly from the DOM.
+      console.log('[AiScraper] Response ready. Extracting text from DOM...');
 
-      const copyButtons = await page.$$(SCRAPER_CONFIG.COPY_BTN_SELECTOR);
-      const lastCopyBtn = copyButtons[copyButtons.length - 1];
+      // Reuse VIOLATION_SELECTOR as the generic assistant-message selector.
+      const responseText = await page.evaluate((selector: string) => {
+        const messages = document.querySelectorAll(selector);
+        if (!messages.length) return '';
 
-      if (!lastCopyBtn) throw new Error('Copy button not found');
+        const lastMessage = messages[messages.length - 1] as HTMLElement | null;
+        if (!lastMessage) return '';
 
-      await lastCopyBtn.click();
-      await new Promise(r => setTimeout(r, 1000));
+        return lastMessage.innerText || lastMessage.textContent || '';
+      }, SCRAPER_CONFIG.VIOLATION_SELECTOR);
 
-      const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+      if (!responseText) {
+        throw new Error('Failed to extract response text from page');
+      }
+
       console.log('[AiScraper] Content retrieved successfully.');
-
-      return clipboardText;
+      return responseText;
 
     } catch (error) {
       console.error("[AiScraper] Text generation failed:", error);
@@ -157,10 +163,13 @@ export class AiScraperService {
     await page.waitForSelector(editorSelector, { timeout: 10000 });
     await page.focus(editorSelector);
 
-    const isMac = process.platform === 'darwin';
-    const modifier = isMac ? 'Meta' : 'Control';
-
+    // Keep the image flow as-is for now (it may rely on Clipboard for images),
+    // but avoid Clipboard API entirely for plain-text prompts, which is what
+    // causes the NotAllowedError in headless/background runs.
     if (localFilePath) {
+      const isMac = process.platform === 'darwin';
+      const modifier = isMac ? 'Meta' : 'Control';
+
       try {
         const buffer = fs.readFileSync(localFilePath);
         const base64Image = buffer.toString('base64');
@@ -195,10 +204,10 @@ export class AiScraperService {
       }
     }
 
-    await page.evaluate((text) => navigator.clipboard.writeText(text), prompt);
-    await page.keyboard.down(modifier);
-    await page.keyboard.press('V');
-    await page.keyboard.up(modifier);
+    // Type the prompt directly into the editor instead of using
+    // navigator.clipboard.writeText, which is blocked when the
+    // document is not focused.
+    await page.type(editorSelector, prompt, { delay: 1 });
     await new Promise(r => setTimeout(r, 800));
 
     await page.waitForSelector(SCRAPER_CONFIG.SEND_BTN_SELECTOR, { timeout: 30000 });
