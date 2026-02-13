@@ -55,7 +55,6 @@ export class BrowserService {
         const origin = new URL(SCRAPER_CONFIG.WEB_URL).origin;
         await context.setPermission(origin, { permission: { name: 'clipboard-read' }, state: 'granted' });
         await context.setPermission(origin, { permission: { name: 'clipboard-write' }, state: 'granted' });
-        await context.setPermission(origin, { permission: { name: 'clipboard-sanitized-write' }, state: 'granted' });
       } catch (e) {
         console.warn('Failed to set permissions for config URL', e);
       }
