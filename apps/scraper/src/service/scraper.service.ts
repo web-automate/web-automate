@@ -203,11 +203,8 @@ export class AiScraperService {
         console.error(error);
       }
     }
-
-    // Type the prompt directly into the editor instead of using
-    // navigator.clipboard.writeText, which is blocked when the
-    // document is not focused.
-    await page.type(editorSelector, prompt, { delay: 1 });
+    
+    await page.locator(editorSelector).fill(prompt);
     await new Promise(r => setTimeout(r, 800));
 
     await page.waitForSelector(SCRAPER_CONFIG.SEND_BTN_SELECTOR, { timeout: 30000 });

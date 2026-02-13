@@ -2,7 +2,7 @@ import { ChildProcess, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { env } from 'process';
-import puppeteer, { Page } from 'puppeteer-core';
+import puppeteer, { Page, Permission } from 'puppeteer-core';
 import { SessionManager } from '../config/session/manager';
 import { SCRAPER_CONFIG } from '../lib/scraper.const';
 
@@ -56,16 +56,16 @@ export class BrowserService {
     const client = await mainPage.createCDPSession();
     this.ensureDownloadDir();
 
+     const permissions: Permission[] = [
+      'clipboard-read',
+      'clipboard-write',
+      'clipboard-sanitized-write',
+    ];
+
     if (SCRAPER_CONFIG.WEB_URL) {
       try {
         const origin = new URL(SCRAPER_CONFIG.WEB_URL).origin;
-        await client.send('Browser.grantPermissions', {
-          origin: origin,
-          permissions: [
-            'clipboardReadWrite',
-            'clipboardSanitizedWrite',
-          ]
-        });
+        await context.overridePermissions(origin, permissions);
       } catch (e) {
         console.warn('Failed to set permissions for config URL', e);
       }
@@ -100,7 +100,6 @@ export class BrowserService {
       '--window-size=1280,1024',
       '--disable-session-crashed-bubble',
       '--disable-infobars',
-      '--restore-last-session',
       '--disable-popup-blocking',
       '--disable-notifications',
       `--default-download-path=${TEMP_DOWNLOAD_DIR}`,
