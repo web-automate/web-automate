@@ -6,8 +6,8 @@ import puppeteer, { Page } from 'puppeteer-core';
 import { SessionManager } from '../config/session/manager';
 import { SCRAPER_CONFIG } from '../lib/scraper.const';
 
-const CHROME_PATH = process.platform === 'win32' 
-  ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
+const CHROME_PATH = process.platform === 'win32'
+  ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
   : '/usr/bin/google-chrome';
 
 const USER_DATA_DIR = path.join(process.cwd(), 'chrome_data_prod');
@@ -50,24 +50,29 @@ export class BrowserService {
 
     const context = browser.defaultBrowserContext();
 
+    const page = await browser.pages();
+    const mainPage = page[0];
+
+    const client = await mainPage.createCDPSession();
+    this.ensureDownloadDir();
+
     if (SCRAPER_CONFIG.WEB_URL) {
       try {
         const origin = new URL(SCRAPER_CONFIG.WEB_URL).origin;
-        await context.setPermission(origin, { permission: { name: 'clipboard-read' }, state: 'granted' });
-        await context.setPermission(origin, { permission: { name: 'clipboard-write' }, state: 'granted' });
+        await client.send('Browser.grantPermissions', {
+          origin: origin,
+          permissions: [
+            'clipboardReadWrite',
+            'clipboardSanitizedWrite',
+          ]
+        });
       } catch (e) {
         console.warn('Failed to set permissions for config URL', e);
       }
     }
 
-    const page = await browser.pages();
-    const mainPage = page[0];
-
     try {
-      this.ensureDownloadDir();
 
-      const client = await mainPage.createCDPSession();
-      
       await client.send('Page.setDownloadBehavior', {
         behavior: 'allow',
         downloadPath: TEMP_DOWNLOAD_DIR,
@@ -106,17 +111,17 @@ export class BrowserService {
       this.browserProcess = spawn(CHROME_PATH, args, { detached: true });
     } else {
       this.browserProcess = spawn('xvfb-run', [
-        '-a', 
-        '--server-args=-screen 0 1280x1024x24', 
-        CHROME_PATH, 
+        '-a',
+        '--server-args=-screen 0 1280x1024x24',
+        CHROME_PATH,
         ...args
-      ], { 
-        detached: true, 
-        stdio: 'inherit' 
+      ], {
+        detached: true,
+        stdio: 'inherit'
       });
     }
 
-    const maxRetries = 20; 
+    const maxRetries = 20;
     let connected = false;
 
     for (let i = 0; i < maxRetries; i++) {
@@ -146,7 +151,7 @@ export class BrowserService {
     }
 
     await this.sessionManager.importSession(page, sessionName);
-    
+
     await page.reload({ waitUntil: 'networkidle2' });
     console.log('Session initialized and page reloaded.');
   }
