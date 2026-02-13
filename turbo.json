@@ -10,6 +10,7 @@
       "dependsOn": ["^db:gen"]
     },
     "build": {
+      "cache": false,
       "dependsOn": ["^db:gen"],
       "outputs": [".next/**", "dist/**"]
     }
