@@ -1,0 +1,3 @@
+[submodule "apps/scraper/data/sessions"]
+	path = apps/scraper/data/sessions
+	url = git@github.com:web-automate/scraper-session.git
