@@ -1,0 +1,103 @@
+services:
+  # ---------- Apps (build from monorepo image) ----------
+  client:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runner
+    image: web-automation:latest
+    container_name: web-automation-client
+    env_file: .env
+    ports:
+      - "${CLIENT_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:admin@postgres:5432/web_auto}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASS=${RABBITMQ_PASS:-guest}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command: ["pnpm", "--filter", "client", "start"]
+
+  builder:
+    image: web-automation:latest
+    container_name: web-automation-builder
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=${BUILDER_PORT:-3002}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:admin@postgres:5432/web_auto}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/apps/builder
+    command: ["node", "dist/index.js"]
+
+  scraper:
+    image: web-automation:latest
+    container_name: web-automation-scraper
+    env_file: .env
+    ports:
+      - "${SCRAPER_PORT:-3001}:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=${SCRAPER_PORT:-3001}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:admin@postgres:5432/web_auto}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app/apps/scraper
+    command: ["node", "dist/index.js"]
+
+  # ---------- Infra (local dev) ----------
+  postgres:
+    image: postgres:16-alpine
+    container_name: web-automation-postgres
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-web_auto}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: web-automation-rabbitmq
+    env_file: .env
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
