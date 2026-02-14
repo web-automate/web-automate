@@ -1,0 +1,21 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": ".",
+        "baseUrl": ".",
+        "paths": {
+            "google-trends-api": ["./src/types/google-trends-api.d.ts"]
+        },
+
+        // Hapus custom typeRoots agar tidak konflik, atau biarkan default
+        // "typeRoots": ["./node_modules/@types"] 
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

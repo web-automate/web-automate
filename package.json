@@ -7,12 +7,12 @@
     "dev:client": "turbo run dev --filter client",
     "dev:builder": "turbo run dev --filter builder",
     "dev:scraper": "turbo run dev --filter scraper",
+    "dev:gtrends": "turbo run dev --filter gtrends",
     "build": "turbo run build",
     "db:gen": "pnpm --filter @repo/database gen",
     "db:migrate": "pnpm --filter @repo/database db:migrate",
     "db:seed": "pnpm --filter @repo/database db:seed",
     "clean": "rm -rf node_modules **/node_modules pnpm-lock.yaml && pnpm install",
-    "postinstall": "pnpm --filter @repo/database gen",
     "type-check": "turbo run type-check"
   },
   "devDependencies": {

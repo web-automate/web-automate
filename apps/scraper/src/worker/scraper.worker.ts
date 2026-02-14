@@ -16,7 +16,7 @@ import { Tone, TonePrompts } from '../lib/tone';
 import { ToneImage, ToneImagePrompts } from '../lib/tone/image';
 import { WebhookResponse } from '../routes/openapi';
 import { rabbitMQService } from '../service/rabbitmq.service';
-import { AiScraperService } from '../service/scraper.service';
+import { AiScraperService } from '../service/scraper';
 import { EditImageQueuePayload } from './types';
 
 const AIService = new AiScraperService();
@@ -103,11 +103,11 @@ async function processImageJob(data: ImageRequest) {
 
     const prompt = promptImage(data, toneGuideline);
 
-    const imagePath = await AIService.generateImage(prompt, data.webpFormat, data.imageMaxSizeKB);
+    const imageBuffer = await AIService.generateImage(prompt, data.webpFormat, data.imageMaxSizeKB);
 
     const payload: ImageWebhookResponse = {
       type: 'IMAGE',
-      imagePath: imagePath,
+      imagePath: 'buffer',
       status: GenerateStatus.COMPLETED,
       articleData: {
         id: data.articleData?.id,
@@ -116,9 +116,9 @@ async function processImageJob(data: ImageRequest) {
     };
 
     if (data.webhookUrl) {
-      await sendWebhook(data.webhookUrl, payload, true);
+      await sendWebhook(data.webhookUrl, payload, true, imageBuffer);
     } else {
-      console.log(`[Worker] Image generated at: ${imagePath}`);
+      console.log(`[Worker] Image generated (Buffer size: ${imageBuffer.length} bytes)`);
     }
   } catch (error: any) {
     console.error(`[Worker] Image Processing failed: ${error.message}`);
@@ -154,11 +154,11 @@ async function processEditImageJob(data: EditImageQueuePayload) {
 
     const prompt = promptEditImage(data, toneGuideline);
 
-    const generatedImagePath = await AIService.generateEditImage(prompt, data.webpFormat, data.imageMaxSizeKB, localFilePath);
+    const imageBuffer = await AIService.generateEditImage(prompt, data.webpFormat, data.imageMaxSizeKB, localFilePath);
 
     const payload = {
       type: 'IMAGE',
-      imagePath: generatedImagePath,
+      imagePath: 'buffer',
       status: GenerateStatus.COMPLETED,
       articleData: {
         id: data.articleData?.id,
@@ -167,19 +167,11 @@ async function processEditImageJob(data: EditImageQueuePayload) {
     };
 
     if (data.webhookUrl) {
-      await sendWebhook(data.webhookUrl, payload, true);
+      await sendWebhook(data.webhookUrl, payload, true, imageBuffer);
     } else {
-      console.log(`[Worker] Image generated at: ${generatedImagePath}`);
+      console.log(`[Worker] Image generated (Buffer size: ${imageBuffer.length} bytes)`);
     }
 
-    if (generatedImagePath && fs.existsSync(generatedImagePath)) {
-      try {
-        fs.rmSync(generatedImagePath, { force: true });
-        console.log(`[Worker] Cleaned up source file: ${generatedImagePath}`);
-      } catch (e) {
-        console.error(`[Worker] Failed to cleanup source file: ${e}`);
-      }
-    }
   } catch (error: any) {
     console.error(`[Worker] Image Processing failed: ${error.message}`);
     if (data.webhookUrl) {
@@ -250,30 +242,27 @@ async function handleDownloadFileS3(s3SignedUrl: string): Promise<string> {
   }
 }
 
-async function sendWebhook(url: string, payload: any, withImage: boolean = false) {
+async function sendWebhook(url: string, payload: any, withImage: boolean = false, imageBuffer?: Buffer) {
   console.log(`[Webhook] Sending result to: ${url}`);
   try {
-    if (withImage) {
+    if (withImage && imageBuffer) {
       const form = new FormData();
 
       for (const [key, value] of Object.entries(payload)) {
-        if (key === 'imagePath' && typeof value === 'string') {
-          const resolvedPath = path.resolve(value);
-          const ext = path.extname(resolvedPath).toLowerCase();
-          const contentType = ext === '.webp' ? 'image/webp' : 'image/png';
-
-          form.append('file', fs.createReadStream(resolvedPath), {
-            filename: path.basename(resolvedPath),
-            contentType,
-          });
-        } else if (typeof value === 'object') {
+        if (key === 'imagePath') continue; 
+        if (typeof value === 'object') {
           form.append(key, JSON.stringify(value));
         } else {
           form.append(key, String(value));
         }
       }
 
-      console.log(`[Webhook] Sending form data`)
+      form.append('file', imageBuffer, {
+        filename: `generated-image-${Date.now()}.png`, 
+        contentType: 'image/png',
+      });
+
+      console.log(`[Webhook] Sending form data with Buffer`)
 
       await axios.post(url, form, {
         headers: {

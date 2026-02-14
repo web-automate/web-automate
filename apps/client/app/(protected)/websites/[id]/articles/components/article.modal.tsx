@@ -7,6 +7,7 @@ import { useClientApi } from "@/lib/hooks/client.api";
 import { ArticleRequest } from "@/lib/types/api";
 import {
     ActionIcon,
+    Button,
     Divider,
     Group,
     NumberInput,
@@ -21,9 +22,11 @@ import {
     Tooltip
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
 import { Author, Website } from "@repo/database";
 import { IconPencil, IconPhoto, IconSparkles, IconTags, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
+import TrendsModal from "./trends.modal";
 
 interface AddArticleModalProps {
     opened: boolean;
@@ -42,6 +45,7 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
 
     const [withImage, setWithImage] = useState(false);
     const [isAiLoading, setIsAiLoading] = useState(false);
+    const [trendsOpened, { open: openTrends, close: closeTrends }] = useDisclosure(false);
 
     const { data: authors, isLoading: isLoadingAuthors } = api.Get<Author[]>(
         `/api/websites/${websiteId}/authors`,
@@ -118,46 +122,59 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
     };
 
     return (
-        <ModularModal
-            opened={opened}
-            onClose={onClose}
-            title="Generate AI Article"
-            description="Our AI will write a high-quality article based on your topic and keywords."
-            submitLabel="Start Generating"
-            onSubmit={form.onSubmit(handleSubmit)}
-            isLoading={isPending}
-            size="md"
-        >
-            <Stack gap="md">
-                <Stack gap="sm">
-                    <TextInput
-                        label="Article Topic"
-                        placeholder="e.g. Pola Pikir Generasi Z"
-                        leftSection={<IconPencil size={16} />}
-                        required
-                        {...form.getInputProps('topic')}
-                        rightSection={
-                            <Tooltip label="Improve with AI">
-                                <ActionIcon
-                                    variant="subtle"
+        <>
+            <ModularModal
+                opened={opened}
+                onClose={onClose}
+                title="Generate AI Article"
+                description="Our AI will write a high-quality article based on your topic and keywords."
+                submitLabel="Start Generating"
+                onSubmit={form.onSubmit(handleSubmit)}
+                isLoading={isPending}
+                size="md"
+            >
+                <Stack gap="md">
+                    <Stack gap="sm">
+                        <Group w={"100%"} align="center" gap="xs">
+                            <TextInput
+                                flex={1}
+                                label="Article Topic"
+                                placeholder="e.g. Pola Pikir Generasi Z"
+                                leftSection={<IconPencil size={16} />}
+                                withAsterisk
+                                {...form.getInputProps('topic')}
+                                rightSection={
+                                    <Tooltip label="Improve with AI">
+                                        <ActionIcon
+                                            variant="subtle"
+                                            color="grape"
+                                            loading={isAiLoading}
+                                            onClick={() => handleAiGenerate('topic')}
+                                        >
+                                            <IconSparkles size={16} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                }
+                            />
+                            <Tooltip label="See what's trending">
+                                <Button
+                                    variant="light"
                                     color="grape"
-                                    loading={isAiLoading}
-                                    onClick={() => handleAiGenerate('topic')}
+                                    mt={25}
+                                    onClick={openTrends}
                                 >
-                                    <IconSparkles size={16} />
-                                </ActionIcon>
+                                    Trends
+                                </Button>
                             </Tooltip>
-                        }
-                    />
+                        </Group>
 
-                    <TagsInput
-                        label="Keywords"
-                        placeholder="Type and press enter"
-                        leftSection={<IconTags size={16} />}
-                        required
-                        {...form.getInputProps('keywords')}
-                        rightSection={
-                            <Tooltip label="Generate Keywords with AI">
+                        <TagsInput
+                            label="Keywords"
+                            placeholder="Type and press enter"
+                            leftSection={<IconTags size={16} />}
+                            required
+                            {...form.getInputProps('keywords')}
+                            rightSection={<Tooltip label="Generate Keywords with AI">
                                 <ActionIcon
                                     variant="subtle"
                                     color="grape"
@@ -167,80 +184,78 @@ export function AddArticleModal({ opened, onClose, websiteId }: AddArticleModalP
                                 >
                                     <IconSparkles size={16} />
                                 </ActionIcon>
-                            </Tooltip>
-                        }
-                    />
-                </Stack>
-
-                <Group grow align="flex-start">
-                    <TextInput
-                        label="Category"
-                        placeholder="e.g. Technology"
-                        required
-                        {...form.getInputProps('category')}
-                    />
-                    <Select
-                        label="Writing Tone"
-                        data={TONES}
-                        required
-                        allowDeselect={false}
-                        {...form.getInputProps('tone')}
-                    />
-                </Group>
-
-                <Select
-                    label="Assign Author"
-                    placeholder={isLoadingAuthors ? "Loading authors..." : "Select author"}
-                    leftSection={<IconUser size={16} />}
-                    required
-                    disabled={isLoadingAuthors}
-                    data={authors?.map(author => ({
-                        value: author.id,
-                        label: author.name
-                    })) || []}
-                    {...form.getInputProps('authorId')}
-                    rightSection={isLoadingAuthors ? <Skeleton circle height={16} /> : null}
-                />
-
-                <Divider label="Visual Enhancements" labelPosition="center" />
-
-                <Paper
-                    withBorder
-                    p="sm"
-                    radius="md"
-                    style={{
-                        borderColor: withImage ? 'var(--mantine-color-blue-filled)' : undefined,
-                        transition: 'border-color 0.2s ease'
-                    }}
-                >
-                    <Stack gap="xs">
-                        <Group justify="space-between">
-                            <Group gap="xs">
-                                <IconPhoto size={20} color={withImage ? 'var(--mantine-color-blue-filled)' : 'gray'} />
-                                <div>
-                                    <Text size="sm" fw={500}>Include AI Generated Images</Text>
-                                    <Text size="xs" c="dimmed">AI will create relevant images for each section</Text>
-                                </div>
-                            </Group>
-                            <Switch
-                                checked={withImage}
-                                onChange={(event) => setWithImage(event.currentTarget.checked)}
-                            />
-                        </Group>
-
-                        {withImage && (
-                            <NumberInput
-                                mt="xs"
-                                label="Number of Images"
-                                description="AI will decide the best placement for these images (Max 5)"
-                                min={1}
-                                max={5}
-                                {...form.getInputProps('imageCount')}
-                            />
-                        )}
+                            </Tooltip>} />
                     </Stack>
-                </Paper>
-            </Stack>
-        </ModularModal>
+
+                    <Group grow align="flex-start">
+                        <TextInput
+                            label="Category"
+                            placeholder="e.g. Technology"
+                            required
+                            {...form.getInputProps('category')} />
+                        <Select
+                            label="Writing Tone"
+                            data={TONES}
+                            required
+                            allowDeselect={false}
+                            {...form.getInputProps('tone')} />
+                    </Group>
+
+                    <Select
+                        label="Assign Author"
+                        placeholder={isLoadingAuthors ? "Loading authors..." : "Select author"}
+                        leftSection={<IconUser size={16} />}
+                        required
+                        disabled={isLoadingAuthors}
+                        data={authors?.map(author => ({
+                            value: author.id,
+                            label: author.name
+                        })) || []}
+                        {...form.getInputProps('authorId')}
+                        rightSection={isLoadingAuthors ? <Skeleton circle height={16} /> : null} />
+
+                    <Divider label="Visual Enhancements" labelPosition="center" />
+
+                    <Paper
+                        withBorder
+                        p="sm"
+                        radius="md"
+                        style={{
+                            borderColor: withImage ? 'var(--mantine-color-blue-filled)' : undefined,
+                            transition: 'border-color 0.2s ease'
+                        }}
+                    >
+                        <Stack gap="xs">
+                            <Group justify="space-between">
+                                <Group gap="xs">
+                                    <IconPhoto size={20} color={withImage ? 'var(--mantine-color-blue-filled)' : 'gray'} />
+                                    <div>
+                                        <Text size="sm" fw={500}>Include AI Generated Images</Text>
+                                        <Text size="xs" c="dimmed">AI will create relevant images for each section</Text>
+                                    </div>
+                                </Group>
+                                <Switch
+                                    checked={withImage}
+                                    onChange={(event) => setWithImage(event.currentTarget.checked)} />
+                            </Group>
+
+                            {withImage && (
+                                <NumberInput
+                                    mt="xs"
+                                    label="Number of Images"
+                                    description="AI will decide the best placement for these images (Max 5)"
+                                    min={1}
+                                    max={5}
+                                    {...form.getInputProps('imageCount')} />
+                            )}
+                        </Stack>
+                    </Paper>
+                </Stack>
+            </ModularModal>
+            <TrendsModal
+                opened={trendsOpened}
+                onClose={closeTrends}
+            />
+        </>
     );
 }
