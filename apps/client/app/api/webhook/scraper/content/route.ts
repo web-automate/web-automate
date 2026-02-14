@@ -152,3 +152,7 @@ export async function POST(req: Request) {
     return new NextResponse(error.message || "Internal Server Error", { status: 500 });
   }
 }
+
+export async function GET(_req: Request) {
+  return NextResponse.json({ success: true });
+}
