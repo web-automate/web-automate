@@ -213,10 +213,15 @@ export class BrowserService {
       console.log('[BrowserService] 3. Reloading page to apply session...');
       await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
 
-      const loginButton = await page.$(SCRAPER_CONFIG.LOGIN_BTN_SELECTOR);
+      await new Promise(r => setTimeout(r, 5000));
 
-      if (loginButton) {
-        throw new Error('❌ Validasi Gagal: Tombol Login masih terdeteksi di layar.');
+      try {
+        await page.waitForSelector(SCRAPER_CONFIG.LOGIN_BTN_SELECTOR, { 
+          visible: true, 
+          timeout: 5000 
+        });
+      } catch (err: any) {
+        throw new Error('❌ Validasi Gagal: Tombol Login terdeteksi (Session invalid).');
       }
 
     } catch (error) {
