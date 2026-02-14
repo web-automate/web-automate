@@ -1,23 +1,6 @@
 import { env } from "../config/env";
 
 const PROVIDERS = {
-  gemini: {
-    WEB_URL: 'https://gemini.google.com/app',
-    NEW_CHAT_BTN_SELECTOR: 'a[href="/app"]',
-    PROMPT_INPUT_SELECTOR: 'div[contenteditable="true"]',
-    COPY_BTN_SELECTOR: 'button[data-test-id="copy-button"]',
-    LOGIN_BTN_SELECTOR: 'a[href="https://accounts.google.com/SignOutOptions"]',
-    VOICE_BTN_SELECTOR: 'button[data-node-type="speech_dictation_mic_button"]',
-    SEND_BTN_SELECTOR: 'button[data-testid="send-button"]',
-    TOOLS_BTN_SELECTOR: 'button[mat-ripple-loader-class-name="mat-mdc-button-ripple"]',
-    IMAGE_BTN_SELECTOR: '//button[.//div[contains(text(), "Buat gambar")]]',
-    DOWNLOAD_BTN_SELECTOR: 'button[data-test-id="download-generated-image-button"]',
-    VIOLATION_SELECTOR: 'message-content', 
-    VIOLATION_KEYWORDS: ["I can't create", "policy", "harmful", "unsafe", "election"],
-    EXPIRED_MODAL_SELECTOR: '[data-testid="modal-expired-session"]',
-    MULTIGEN_SELECTOR: 'div[data-testid="image-paragen-multigen"]',
-    NO_AUTH_LOGIN_MODAL_SELECTOR: 'div[data-testid="modal-no-auth-login"]',
-  },
   chatgpt: {
     WEB_URL: 'https://chatgpt.com',
     NEW_CHAT_BTN_SELECTOR: 'a[data-testid="create-new-chat-button"]',
@@ -42,6 +25,7 @@ const PROVIDERS = {
     EXPIRED_MODAL_SELECTOR: '[data-testid="modal-expired-session"]',
     MULTIGEN_SELECTOR: 'div[data-testid="image-paragen-multigen"]',
     NO_AUTH_LOGIN_MODAL_SELECTOR: 'div[data-testid="modal-no-auth-login"]',
+    LOGIN_BUTTON_SELECTOR: 'button[data-testid="login-button"]',
   }
 };
 

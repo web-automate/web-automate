@@ -18,7 +18,7 @@ export class BrowserService {
   private browserProcess: ChildProcess | null = null;
   private browserInstance: Browser | null = null;
   private activePage: Page | null = null; // Menyimpan referensi page utama
-  
+
   public sessionManager: SessionManager = new SessionManager();
 
   // --- HELPER FUNCTIONS ---
@@ -146,7 +146,7 @@ export class BrowserService {
     // 5. Setup Single Tab Policy
     const pages = await this.browserInstance.pages();
     this.activePage = pages.length > 0 ? pages[0] : await this.browserInstance.newPage();
-    
+
     // Tutup tab lain jika ada sisa dari sesi sebelumnya
     if (pages.length > 1) {
       console.log(`[BrowserService] Closing ${pages.length - 1} extra tabs...`);
@@ -198,32 +198,30 @@ export class BrowserService {
   private async performLoginSequence(page: Page, sessionName: string) {
     if (!SCRAPER_CONFIG.WEB_URL) return;
 
-    const targetUrl = new URL(SCRAPER_CONFIG.WEB_URL);
-    const domainOrigin = targetUrl.origin;
+    const targetUrl = SCRAPER_CONFIG.WEB_URL;
 
     try {
-      // a. Dummy navigation for domain context
-      console.log(`[BrowserService] Setting domain context at ${domainOrigin}...`);
-      try {
-        await page.goto(domainOrigin, { waitUntil: 'domcontentloaded', timeout: 15000 });
-      } catch (e) { console.log("Context init timeout (ignoring)..."); }
+      console.log(`[BrowserService] 1. Navigating to domain to set context: ${targetUrl}`);
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-      // b. Inject Cookies/Storage
-      console.log('[BrowserService] Injecting storage & cookies...');
+      console.log('[BrowserService] 2. Injecting Session (Cookies & LocalStorage)...');
+
       await this.sessionManager.importSession(page, sessionName);
-      await new Promise(r => setTimeout(r, 2000));
 
-      // c. Real Navigation
-      console.log(`[BrowserService] 🚀 Navigating to: ${SCRAPER_CONFIG.WEB_URL}`);
-      await page.goto(SCRAPER_CONFIG.WEB_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+      await new Promise(r => setTimeout(r, 1000));
 
-      // d. Screenshot Debug
-      const debugPath = path.join(process.cwd(), 'debug_login_status.png');
-      await page.screenshot({ path: debugPath });
-      console.log(`✅ Session Ready. Screenshot: ${debugPath}`);
+      console.log('[BrowserService] 3. Reloading page to apply session...');
+      await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
+
+      const loginButton = await page.$(SCRAPER_CONFIG.LOGIN_BTN_SELECTOR);
+
+      if (loginButton) {
+        throw new Error('❌ Validasi Gagal: Tombol Login masih terdeteksi di layar.');
+      }
 
     } catch (error) {
       console.error('❌ Login Sequence Failed:', error);
+      await page.screenshot({ path: path.join(process.cwd(), 'debug_error_inject.png') });
       throw error;
     }
   }
