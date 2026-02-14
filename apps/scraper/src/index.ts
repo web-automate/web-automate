@@ -121,6 +121,9 @@ const startApp = async () => {
     await browserService.launch();
     await browserService.initSession(`session-${env.AI_PROVIDER}`);
     console.log('      ✅ Browser Ready');
+
+    await sessionMonitor.validateNow();
+    
     sessionMonitor.start();
 
     console.log('[2/4] 🐰 Connecting to RabbitMQ...');

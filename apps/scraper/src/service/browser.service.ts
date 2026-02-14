@@ -106,7 +106,7 @@ export class BrowserService {
       '--disable-session-crashed-bubble',
       '--disable-infobars',
       '--disable-notifications',
-      '--disable-blink-features=AutomationControlled', 
+      '--disable-blink-features=AutomationControlled',
       '--ignore-certificate-errors',
       '--use-gl=swiftshader', 
       '--disable-dev-shm-usage',
@@ -115,23 +115,26 @@ export class BrowserService {
       '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
     ];
 
+    console.log('[BrowserService] Spawning Chrome process...');
+
     if (process.platform === 'win32') {
       this.browserProcess = spawn(CHROME_PATH, args, { detached: true });
     } else {
-      // Menggunakan xvfb-run untuk virtual display di Ubuntu
-      this.browserProcess = spawn('xvfb-run', [
+      this.browserProcess = spawn('nohup', [
+        'xvfb-run',
         '-a',
         '--server-args=-screen 0 1280x1024x24',
         CHROME_PATH,
         ...args
       ], {
         detached: true,
-        stdio: 'inherit'
+        stdio: 'ignore' 
       });
+      this.browserProcess.unref();
     }
 
     let connected = false;
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       try {
         const response = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/version`);
         if (response.ok) {
@@ -155,15 +158,28 @@ export class BrowserService {
 
     try {
       if (SCRAPER_CONFIG.WEB_URL) {
-        await page.goto(SCRAPER_CONFIG.WEB_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      }
+        const targetUrl = new URL(SCRAPER_CONFIG.WEB_URL);
+        const domainOrigin = targetUrl.origin;
+        
+        console.log(`[BrowserService] Setting domain context at ${domainOrigin}...`);
+        try {
+            await page.goto(domainOrigin, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        } catch (e) {
+            console.log("Context navigation timeout (ignoring)...");
+        }
 
-      await this.sessionManager.importSession(page, sessionName);
-      
-      await new Promise(r => setTimeout(r, 2000)); 
-      
-      await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
-      console.log('✅ Session injected and page reloaded.');
+        console.log('[BrowserService] Injecting storage & cookies...');
+        await this.sessionManager.importSession(page, sessionName);
+        
+        await new Promise(r => setTimeout(r, 3000)); 
+        
+        console.log(`[BrowserService] Navigating to target: ${SCRAPER_CONFIG.WEB_URL}`);
+        await page.goto(SCRAPER_CONFIG.WEB_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+        
+        const debugPath = path.join(process.cwd(), 'debug_login_status.png');
+        await page.screenshot({ path: debugPath });
+        console.log(`✅ Session injected. Screenshot saved to: ${debugPath}`);
+      }
     } catch (error) {
       console.error('❌ Failed to init session:', error);
       await page.screenshot({ path: path.join(process.cwd(), `data/error/session_error_${sessionName}_${Date.now()}.png`) });
@@ -171,10 +187,14 @@ export class BrowserService {
   }
 
   public kill() {
-    if (this.browserProcess) {
-      console.log('Stopping browser process...');
-      this.browserProcess.kill();
-      this.browserProcess = null;
+    if (this.browserProcess && this.browserProcess.pid) {
+      console.log('Stopping browser process group...');
+      try {
+        process.kill(-this.browserProcess.pid); 
+        this.browserProcess = null;
+      } catch (e) {
+          console.error("Error killing process", e);
+      }
     }
   }
 }

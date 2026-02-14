@@ -8,10 +8,14 @@ export class SessionMonitorService {
 
   public start() {
     console.log('🕒 Session Monitor Scheduler started (Check every 1 hour)');
-    this.checkSessionValidity();
     cron.schedule('0 * * * *', async () => {
       await this.checkSessionValidity();
     });
+  }
+
+  public async validateNow() {
+      console.log('[SessionMonitor] Performing manual validation...');
+      await this.checkSessionValidity();
   }
 
   private async checkSessionValidity() {
@@ -22,11 +26,21 @@ export class SessionMonitorService {
     try {
       const page = await browserService.getMainPage();
       
+      if (page.url() === 'about:blank') {
+          console.warn('[SessionMonitor] Page is blank, skipping check.');
+          return;
+      }
+
       const EXPIRED_MODAL_SELECTOR = SCRAPER_CONFIG.EXPIRED_MODAL_SELECTOR;
       const NO_AUTH_LOGIN_MODAL_SELECTOR = SCRAPER_CONFIG.NO_AUTH_LOGIN_MODAL_SELECTOR;
 
-      const isExpired = await page.$(EXPIRED_MODAL_SELECTOR) !== null;
-      const isNoAuthLogin = await page.$(NO_AUTH_LOGIN_MODAL_SELECTOR) !== null;
+      const isExpired = EXPIRED_MODAL_SELECTOR 
+        ? await page.$(EXPIRED_MODAL_SELECTOR).then(res => !!res) 
+        : false;
+        
+      const isNoAuthLogin = NO_AUTH_LOGIN_MODAL_SELECTOR 
+        ? await page.$(NO_AUTH_LOGIN_MODAL_SELECTOR).then(res => !!res) 
+        : false;
 
       if (isExpired) {
         console.warn('[SessionMonitor] 🚨 SESSION EXPIRED DETECTED!');
@@ -51,12 +65,13 @@ export class SessionMonitorService {
       await page.reload({ waitUntil: 'networkidle2' });
 
       if (SCRAPER_CONFIG.EXPIRED_MODAL_SELECTOR) {
-        const expiredModal = await page.$(SCRAPER_CONFIG.EXPIRED_MODAL_SELECTOR);
-        if (expiredModal) {
+        try {
+            await page.waitForSelector(SCRAPER_CONFIG.EXPIRED_MODAL_SELECTOR, { timeout: 5000 });
             console.error('[SessionMonitor] ❌ User is logged out! Manual login required.');
+        } catch {
+            console.log('[SessionMonitor] ✅ Session restored after refresh.');
         }
       }
-      
     } catch (error) {
       console.error('[SessionMonitor] Failed to handle expired session:', error);
     }
@@ -68,12 +83,13 @@ export class SessionMonitorService {
       await page.reload({ waitUntil: 'networkidle2' });
 
       if (SCRAPER_CONFIG.NO_AUTH_LOGIN_MODAL_SELECTOR) {
-        const noAuthLoginModal = await page.$(SCRAPER_CONFIG.NO_AUTH_LOGIN_MODAL_SELECTOR);
-        if (noAuthLoginModal) {
-            console.error('[SessionMonitor] ❌ User is not logged in! Manual login required.');
+        try {
+            await page.waitForSelector(SCRAPER_CONFIG.NO_AUTH_LOGIN_MODAL_SELECTOR, { timeout: 5000 });
+            console.error('[SessionMonitor] ❌ Refresh failed. User is still not logged in!');
+        } catch {
+            console.log('[SessionMonitor] ✅ Session restored after refresh.');
         }
       }
-      
     } catch (error) {
       console.error('[SessionMonitor] Failed to handle no auth login session:', error);
     }
