@@ -1,3 +1,4 @@
+import { SessionMonitorService } from '../session-monitor.service';
 import { FileManager } from './file-manager';
 import { ImageScraper } from './image-scraper';
 import { ScraperCore } from './scraper-core';
@@ -6,13 +7,15 @@ import { TextScraper } from './text-scraper';
 export class AiScraperService {
   private fileManager: FileManager;
   private core: ScraperCore;
+  private sessionMonitor: SessionMonitorService;
   private textScraper: TextScraper;
   private imageScraper: ImageScraper;
 
   constructor() {
     this.fileManager = new FileManager();
     this.core = new ScraperCore();
-    this.textScraper = new TextScraper(this.core);
+    this.sessionMonitor = new SessionMonitorService();
+    this.textScraper = new TextScraper(this.core, this.sessionMonitor);
     this.imageScraper = new ImageScraper(this.core, this.fileManager);
   }
 

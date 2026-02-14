@@ -1,8 +1,12 @@
 import { SCRAPER_CONFIG } from '../../lib/scraper.const';
+import { SessionMonitorService } from '../session-monitor.service';
 import { ScraperCore } from './scraper-core';
 
 export class TextScraper {
-  constructor(private core: ScraperCore) {}
+  constructor(
+    private core: ScraperCore,
+    private sessionMonitor: SessionMonitorService
+  ) {}
 
   public async generate(prompt: string): Promise<string> {
     try {
@@ -31,6 +35,7 @@ export class TextScraper {
 
       return responseText;
     } catch (error) {
+      this.sessionMonitor.validateNow();
       throw error;
     }
   }
