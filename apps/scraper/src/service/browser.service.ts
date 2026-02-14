@@ -12,7 +12,7 @@ const CHROME_PATH = process.platform === 'win32'
 
 const USER_DATA_DIR = path.join(process.cwd(), 'chrome_data_prod');
 export const TEMP_DOWNLOAD_DIR = path.join(process.cwd(), 'temp_downloads');
-export const DEBUG_PORT = env.DEBUG_PORT || 9222;
+export const DEBUG_PORT = Number(env.DEBUG_PORT) || 9222;
 
 export class BrowserService {
   private browserProcess: ChildProcess | null = null;
@@ -31,14 +31,15 @@ export class BrowserService {
           }
           fs.writeFileSync(preferencesPath, JSON.stringify(json, null, 2));
         }
-      } catch (error) { }
+      } catch (error) {
+        console.error('Failed to fix Chrome preferences:', error);
+      }
     }
   }
 
   private ensureDownloadDir() {
     if (!fs.existsSync(TEMP_DOWNLOAD_DIR)) {
       fs.mkdirSync(TEMP_DOWNLOAD_DIR, { recursive: true });
-      console.log(`Created download directory: ${TEMP_DOWNLOAD_DIR}`);
     }
   }
 
@@ -48,37 +49,39 @@ export class BrowserService {
       defaultViewport: null,
     });
 
-    const context = browser.defaultBrowserContext();
+    const pages = await browser.pages();
+    const mainPage = pages.length > 0 ? pages[0] : await browser.newPage();
 
-    const page = await browser.pages();
-    const mainPage = page[0];
+    await mainPage.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+      (window as any).chrome = { runtime: {} };
+      const originalQuery = window.navigator.permissions.query;
+      window.navigator.permissions.query = (parameters) =>
+        parameters.name === 'notifications'
+          ? Promise.resolve({ state: Notification.permission } as PermissionStatus)
+          : originalQuery(parameters);
+    });
 
     const client = await mainPage.createCDPSession();
     this.ensureDownloadDir();
 
-     const permissions: Permission[] = [
-      'clipboard-read',
-      'clipboard-write',
-      'clipboard-sanitized-write',
-    ];
-
     if (SCRAPER_CONFIG.WEB_URL) {
       try {
+        const context = browser.defaultBrowserContext();
         const origin = new URL(SCRAPER_CONFIG.WEB_URL).origin;
+        const permissions: Permission[] = ['clipboard-read', 'clipboard-write'];
         await context.overridePermissions(origin, permissions);
       } catch (e) {
-        console.warn('Failed to set permissions for config URL', e);
+        console.warn('Failed to set permissions:', e);
       }
     }
 
     try {
-
       await client.send('Page.setDownloadBehavior', {
         behavior: 'allow',
         downloadPath: TEMP_DOWNLOAD_DIR,
       });
-
-      console.log(`✅ Download path set to: ${TEMP_DOWNLOAD_DIR}`);
+      console.log(`✅ Download path ready: ${TEMP_DOWNLOAD_DIR}`);
     } catch (error) {
       console.error('❌ Failed to set download behavior:', error);
     }
@@ -90,25 +93,32 @@ export class BrowserService {
     if (this.browserProcess) return;
 
     this.fixPreferences();
+    this.ensureDownloadDir();
 
     const args = [
-      '--remote-debugging-port=' + DEBUG_PORT,
+      `--remote-debugging-port=${DEBUG_PORT}`,
       '--no-first-run',
       '--no-sandbox',
+      '--disable-setuid-sandbox',
       '--no-default-browser-check',
-      '--user-data-dir=' + USER_DATA_DIR,
+      `--user-data-dir=${USER_DATA_DIR}`,
       '--window-size=1280,1024',
       '--disable-session-crashed-bubble',
       '--disable-infobars',
-      '--disable-popup-blocking',
       '--disable-notifications',
-      `--default-download-path=${TEMP_DOWNLOAD_DIR}`,
+      '--disable-blink-features=AutomationControlled', 
       '--ignore-certificate-errors',
-      '--ignore-certificate-errors-spki-list',];
+      '--use-gl=swiftshader', 
+      '--disable-dev-shm-usage',
+      '--disable-gpu', 
+      '--lang=en-US,en;q=0.9',
+      '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    ];
 
     if (process.platform === 'win32') {
       this.browserProcess = spawn(CHROME_PATH, args, { detached: true });
     } else {
+      // Menggunakan xvfb-run untuk virtual display di Ubuntu
       this.browserProcess = spawn('xvfb-run', [
         '-a',
         '--server-args=-screen 0 1280x1024x24',
@@ -120,43 +130,49 @@ export class BrowserService {
       });
     }
 
-    const maxRetries = 20;
     let connected = false;
-
-    for (let i = 0; i < maxRetries; i++) {
+    for (let i = 0; i < 20; i++) {
       try {
         const response = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/version`);
         if (response.ok) {
-          console.log("✅ Chrome is ready!");
+          console.log("✅ Chrome is ready and listening!");
           connected = true;
           break;
         }
       } catch (e) {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
 
     if (!connected) {
-      throw new Error('Chrome failed to start: Port 9222 unreachable after 10 seconds.');
+      throw new Error(`Chrome failed to start on port ${DEBUG_PORT}`);
     }
   }
 
   public async initSession(sessionName: string) {
-    console.log(`Initializing session: ${sessionName}`);
+    console.log(`[BrowserService] Initializing session: ${sessionName}`);
     const page = await this.getMainPage();
 
-    if (SCRAPER_CONFIG.WEB_URL) {
-      await page.goto(SCRAPER_CONFIG.WEB_URL, { waitUntil: 'domcontentloaded' });
+    try {
+      if (SCRAPER_CONFIG.WEB_URL) {
+        await page.goto(SCRAPER_CONFIG.WEB_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      }
+
+      await this.sessionManager.importSession(page, sessionName);
+      
+      await new Promise(r => setTimeout(r, 2000)); 
+      
+      await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
+      console.log('✅ Session injected and page reloaded.');
+    } catch (error) {
+      console.error('❌ Failed to init session:', error);
+      await page.screenshot({ path: path.join(process.cwd(), `data/error/session_error_${sessionName}_${Date.now()}.png`) });
     }
-
-    await this.sessionManager.importSession(page, sessionName);
-
-    await page.reload({ waitUntil: 'networkidle2' });
-    console.log('Session initialized and page reloaded.');
   }
 
   public kill() {
     if (this.browserProcess) {
+      console.log('Stopping browser process...');
       this.browserProcess.kill();
       this.browserProcess = null;
     }
