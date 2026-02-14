@@ -52,6 +52,27 @@ export class BrowserService {
     const pages = await browser.pages();
     const mainPage = pages.length > 0 ? pages[0] : await browser.newPage();
 
+    // 1. Grant Permissions Logic (Fixed)
+    if (SCRAPER_CONFIG.WEB_URL) {
+      try {
+        const context = browser.defaultBrowserContext();
+        const urlObj = new URL(SCRAPER_CONFIG.WEB_URL);
+        const origin = urlObj.origin;
+        
+        // Define exact permissions needed
+        const permissions: Permission[] = [
+          'clipboard-read', 
+          'clipboard-write', 
+          'clipboard-sanitized-write'
+        ];
+        
+        console.log(`[BrowserService] Granting permissions to ${origin}...`);
+        await context.overridePermissions(origin, permissions);
+      } catch (e) {
+        console.warn('[BrowserService] Warning: Failed to override permissions (this is common in some headless environments):', e);
+      }
+    }
+
     await mainPage.evaluateOnNewDocument(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => false });
       (window as any).chrome = { runtime: {} };
@@ -64,17 +85,6 @@ export class BrowserService {
 
     const client = await mainPage.createCDPSession();
     this.ensureDownloadDir();
-
-    if (SCRAPER_CONFIG.WEB_URL) {
-      try {
-        const context = browser.defaultBrowserContext();
-        const origin = new URL(SCRAPER_CONFIG.WEB_URL).origin;
-        const permissions: Permission[] = ['clipboard-read', 'clipboard-write'];
-        await context.overridePermissions(origin, permissions);
-      } catch (e) {
-        console.warn('Failed to set permissions:', e);
-      }
-    }
 
     try {
       await client.send('Page.setDownloadBehavior', {
@@ -112,6 +122,8 @@ export class BrowserService {
       '--disable-dev-shm-usage',
       '--disable-gpu', 
       '--lang=en-US,en;q=0.9',
+      // Added Clipboard feature flags
+      '--enable-features=Clipboard', 
       '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
     ];
 

@@ -1,4 +1,4 @@
-import { Page } from 'puppeteer-core'; // Pastikan import Page ada
+import { Page } from 'puppeteer-core';
 import { SCRAPER_CONFIG } from '../../lib/scraper.const';
 import { SessionMonitorService } from '../session-monitor.service';
 import { ScraperCore } from './scraper-core';
@@ -50,30 +50,58 @@ export class TextScraper {
         const lastCopyBtn = copyButtons[copyButtons.length - 1];
 
         if (!lastCopyBtn) {
-           throw new Error('Copy button selector found no elements');
+            throw new Error('Copy button selector found no elements');
         }
 
         console.info('[TextScraper] Clicking the last Copy Button...');
         await lastCopyBtn.click();
         
-        // Wait for clipboard write operation
+        // Give browser time to write to internal clipboard
         await new Promise(r => setTimeout(r, 1000));
       } catch (error) {
         console.error('[TextScraper] Error finding or clicking Copy Button:', error);
         throw error;
       }
 
-      // 5. Read from Clipboard
+      // 5. Read from Clipboard (Using Paste Workaround)
       try {
-        console.info('[TextScraper] Reading text from clipboard...');
-        const responseText = await page.evaluate(() => navigator.clipboard.readText());
+        console.info('[TextScraper] Reading text via Paste workaround...');
+        
+        // --- FIX STARTS HERE ---
+        // Instead of navigator.clipboard.readText(), we paste into a dummy element
+        const responseText = await page.evaluate(async () => {
+          // 1. Create a textarea
+          const textarea = document.createElement('textarea');
+          document.body.appendChild(textarea);
+          textarea.value = '';
+          textarea.select();
+          textarea.focus();
+          
+          // 2. Return the element validation for the node script to proceed
+          return true;
+        });
 
-        if (!responseText) {
-          throw new Error('Clipboard is empty or access denied');
+        // 3. Perform Paste (Ctrl+V / Cmd+V)
+        const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
+        await page.keyboard.down(modifier);
+        await page.keyboard.press('V');
+        await page.keyboard.up(modifier);
+
+        // 4. Read value and cleanup
+        const pastedContent = await page.evaluate(() => {
+          const textarea = document.querySelector('textarea');
+          const content = textarea?.value || '';
+          textarea?.remove();
+          return content;
+        });
+        // --- FIX ENDS HERE ---
+
+        if (!pastedContent) {
+          throw new Error('Clipboard is empty or access denied (Paste yielded empty string)');
         }
 
-        console.info(`[TextScraper] Successfully extracted text (${responseText.length} chars).`);
-        return responseText;
+        console.info(`[TextScraper] Successfully extracted text (${pastedContent.length} chars).`);
+        return pastedContent;
 
       } catch (error) {
         console.error('[TextScraper] Error reading clipboard contents:', error);
@@ -83,14 +111,11 @@ export class TextScraper {
     } catch (error) {
       // Global Error Handler for Text Generation
       console.error('[TextScraper] CRITICAL ERROR in generate flow. Triggering session validation.', error);
-      
-      // Bungkus validasi session dalam try-catch juga agar tidak menelan error asli jika validasi gagal
       try {
         this.sessionMonitor.validateNow();
       } catch (monitorError) {
         console.error('[TextScraper] Failed to execute sessionMonitor.validateNow():', monitorError);
       }
-      
       throw error;
     }
   }
