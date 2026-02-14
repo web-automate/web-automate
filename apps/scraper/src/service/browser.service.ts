@@ -79,15 +79,6 @@ export class BrowserService {
             state: 'granted',
           }
         );
-        await context.setPermission(
-          origin,
-          {
-            permission: {
-              name: 'clipboard-sanitized-write',
-            },
-            state: 'granted',
-          }
-        );
 
       } catch (e) {
         console.warn('[BrowserService] Warning: Failed to override permissions (this is common in some headless environments):', e);
