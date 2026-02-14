@@ -1,27 +1,25 @@
 import sharp from 'sharp';
-import fs from 'fs';
 
 export class ImageHelper {
   
-  static async convertToWebP(inputPath: string, outputPath: string, quality: number = 80): Promise<string> {
+  static async convertToWebP(buffer: Buffer, quality: number = 80): Promise<Buffer> {
     try {
-      await sharp(inputPath)
+      const webpBuffer = await sharp(buffer)
         .webp({ quality: quality })
-        .toFile(outputPath);
+        .toBuffer();
       
-      return outputPath;
+      return webpBuffer;
     } catch (error) {
       console.error('Error converting to WebP:', error);
       throw error;
     }
   }
 
-  static async compressToSize(inputPath: string, outputPath: string, maxPacketSizeKB: number): Promise<string> {
+  static async compressToSize(buffer: Buffer, maxPacketSizeKB: number = 100): Promise<Buffer> {
     const maxSizeBytes = maxPacketSizeKB * 1024;
     let quality = 90; 
-    let buffer: Buffer;
 
-    const image = sharp(inputPath);
+    const image = sharp(buffer);
 
     while (quality > 10) { 
       buffer = await image
@@ -42,9 +40,8 @@ export class ImageHelper {
       }
     }
 
-    fs.writeFileSync(outputPath, buffer!);
-    console.log(`[ImageHelper] Compressed to ${(buffer!.length / 1024).toFixed(2)} KB with quality ${quality}`);
+    console.log(`[ImageHelper] Compressed to ${(buffer.length / 1024).toFixed(2)} KB with quality ${quality}`);
     
-    return outputPath;
+    return buffer;
   }
 }

@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { ImageHelper } from '../../helper/img-converter';
 import { TEMP_DOWNLOAD_DIR } from '../browser.service';
 
 export class FileManager {
@@ -38,38 +37,6 @@ export class FileManager {
 
   public getRepoRoot(): string {
     return this.repoRoot;
-  }
-
-  public async processDownloadedFile(
-    sourceFilePath: string,
-    destDir: string,
-    imageMaxSizeKB?: number,
-    webpFormat?: boolean
-  ): Promise<string> {
-    try {
-      if (!fs.existsSync(sourceFilePath)) {
-        throw new Error(`Source file not found: ${sourceFilePath}`);
-      }
-
-      const newName = `image-${uuidv4()}.webp`;
-      let finalPath = path.join(destDir, newName);
-
-      if (imageMaxSizeKB) {
-        await ImageHelper.compressToSize(sourceFilePath, finalPath, imageMaxSizeKB);
-        fs.unlinkSync(sourceFilePath);
-      } else if (webpFormat) {
-        await ImageHelper.convertToWebP(sourceFilePath, finalPath);
-        fs.unlinkSync(sourceFilePath);
-      } else {
-        const ext = path.extname(sourceFilePath);
-        finalPath = path.join(destDir, `image-${uuidv4()}${ext}`);
-        fs.renameSync(sourceFilePath, finalPath);
-      }
-
-      return finalPath;
-    } catch (err) {
-      throw err;
-    }
   }
 
   public saveBufferToTemp(buffer: Buffer): string {

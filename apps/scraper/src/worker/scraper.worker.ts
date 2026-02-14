@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import path from 'path';
 import { env } from '../config/env';
 import s3Client from '../helper/aws-client';
+import { ImageHelper } from '../helper/img-converter';
 import { promptContent, promptEditImage, promptImage } from '../lib/constants/prompt';
 import { queueNames } from '../lib/constants/queue-name';
 import { GenerateStatus } from '../lib/enum/status-response';
@@ -249,8 +250,11 @@ async function sendWebhook(url: string, payload: any, withImage: boolean = false
     if (withImage && imageBuffer) {
       const form = new FormData();
 
+      const compressedBuffer = await ImageHelper.compressToSize(imageBuffer);
+      const webpBuffer = await ImageHelper.convertToWebP(compressedBuffer);
+
       for (const [key, value] of Object.entries(payload)) {
-        if (key === 'imagePath') continue; 
+        if (key === 'imagePath') continue;
         if (typeof value === 'object') {
           form.append(key, JSON.stringify(value));
         } else {
@@ -258,9 +262,9 @@ async function sendWebhook(url: string, payload: any, withImage: boolean = false
         }
       }
 
-      form.append('file', imageBuffer, {
-        filename: `generated-image-${Date.now()}.png`, 
-        contentType: 'image/png',
+      form.append('file', webpBuffer, {
+        filename: `${randomUUID()}.webp`,
+        contentType: 'image/webp',
       });
 
       console.log(`[Webhook] Sending form data with Buffer`)
