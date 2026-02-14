@@ -176,13 +176,13 @@ export class BrowserService {
         console.log(`[BrowserService] Navigating to target: ${SCRAPER_CONFIG.WEB_URL}`);
         await page.goto(SCRAPER_CONFIG.WEB_URL, { waitUntil: 'networkidle2', timeout: 60000 });
         
-        const debugPath = path.join(process.cwd(), 'debug_login_status.png');
+        const debugPath = path.join(process.cwd(), 'data/debug/debug_login_status.png');
         await page.screenshot({ path: debugPath });
         console.log(`✅ Session injected. Screenshot saved to: ${debugPath}`);
       }
     } catch (error) {
       console.error('❌ Failed to init session:', error);
-      await page.screenshot({ path: path.join(process.cwd(), `data/error/session_error_${sessionName}_${Date.now()}.png`) });
+      await page.screenshot({ path: path.join(process.cwd(), `data/error/session_error.png`) });
     }
   }
 

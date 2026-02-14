@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import path from 'path';
 import { Page } from 'puppeteer-core';
 import { SCRAPER_CONFIG } from '../lib/scraper.const';
 import { browserService } from './browser.service';
@@ -66,7 +67,9 @@ export class SessionMonitorService {
 
       if (SCRAPER_CONFIG.EXPIRED_MODAL_SELECTOR) {
         try {
-            await page.waitForSelector(SCRAPER_CONFIG.EXPIRED_MODAL_SELECTOR, { timeout: 5000 });
+            await page.waitForSelector(SCRAPER_CONFIG.EXPIRED_MODAL_SELECTOR, { timeout: 60000 });
+            const debugPath = path.join(process.cwd(), 'data/error/expired-modal.png');
+            await page.screenshot({ path: debugPath });
             console.error('[SessionMonitor] ❌ User is logged out! Manual login required.');
         } catch {
             console.log('[SessionMonitor] ✅ Session restored after refresh.');
@@ -84,7 +87,9 @@ export class SessionMonitorService {
 
       if (SCRAPER_CONFIG.NO_AUTH_LOGIN_MODAL_SELECTOR) {
         try {
-            await page.waitForSelector(SCRAPER_CONFIG.NO_AUTH_LOGIN_MODAL_SELECTOR, { timeout: 5000 });
+            await page.waitForSelector(SCRAPER_CONFIG.NO_AUTH_LOGIN_MODAL_SELECTOR, { timeout: 60000 });
+            const debugPath = path.join(process.cwd(), 'data/error/no-auth-login-modal.png');
+            await page.screenshot({ path: debugPath });
             console.error('[SessionMonitor] ❌ Refresh failed. User is still not logged in!');
         } catch {
             console.log('[SessionMonitor] ✅ Session restored after refresh.');
