@@ -2,7 +2,7 @@ import { ChildProcess, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { env } from 'process';
-import puppeteer, { Page, Permission } from 'puppeteer-core';
+import puppeteer, { Page } from 'puppeteer-core';
 import { SessionManager } from '../config/session/manager';
 import { SCRAPER_CONFIG } from '../lib/scraper.const';
 
@@ -59,15 +59,7 @@ export class BrowserService {
         const urlObj = new URL(SCRAPER_CONFIG.WEB_URL);
         const origin = urlObj.origin;
         
-        // Define exact permissions needed
-        const permissions: Permission[] = [
-          'clipboard-read', 
-          'clipboard-write', 
-          'clipboard-sanitized-write'
-        ];
-        
         console.log(`[BrowserService] Granting permissions to ${origin}...`);
-        await context.overridePermissions(origin, permissions);
         await context.setPermission(
           origin,
           {
