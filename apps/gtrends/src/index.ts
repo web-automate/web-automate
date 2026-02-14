@@ -9,6 +9,7 @@ dotenv.config();
 
 const app = express();
 const port = 3003;
+const host = process.env.HOST || 'localhost';
 
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6377', 10);
@@ -149,7 +150,7 @@ app.get('/', async (req: Request, res: Response) => {
     }
 });
 
-app.listen(port, () => {
+app.listen(port, host, () => {
     console.log(`Server running at http://localhost:${port}`);
     redis.sadd(ACTIVE_GEOS_KEY, 'ID'); 
 });
