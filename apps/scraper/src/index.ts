@@ -118,8 +118,8 @@ const startApp = async () => {
     console.log(`\n--- ${env.AI_PROVIDER.toUpperCase()} ---\n`);
     
     console.log('[1/4] 🌐 Launching Browser Service...');
-    await browserService.launch();
-    await browserService.initSession(`session-${env.AI_PROVIDER}`);
+    const sessionName = `session-${env.AI_PROVIDER}`; 
+    await browserService.launch(sessionName);
     console.log('      ✅ Browser Ready');
 
     await sessionMonitor.validateNow();
