@@ -47,38 +47,41 @@ export class BrowserService {
     const browser = await puppeteer.connect({
       browserURL: `http://127.0.0.1:${DEBUG_PORT}`,
       defaultViewport: null,
+      downloadBehavior: {
+        policy: 'allow',
+        downloadPath: TEMP_DOWNLOAD_DIR,
+      },
     });
 
     const pages = await browser.pages();
     const mainPage = pages.length > 0 ? pages[0] : await browser.newPage();
 
-    // 1. Grant Permissions Logic (Fixed)
     if (SCRAPER_CONFIG.WEB_URL) {
       try {
-        const context = browser.defaultBrowserContext();
+        await browser.createBrowserContext({
+          downloadBehavior: {
+            policy: 'allow',
+            downloadPath: TEMP_DOWNLOAD_DIR,
+          },
+        });
+
         const urlObj = new URL(SCRAPER_CONFIG.WEB_URL);
         const origin = urlObj.origin;
-        
-        console.log(`[BrowserService] Granting permissions to ${origin}...`);
-        await context.setPermission(
-          origin,
-          {
-            permission: {
-              name: 'clipboard-read',
-            },
-            state: 'granted',
-          }
-        );
 
-        await context.setPermission(
-          origin,
-          {
-            permission: {
-              name: 'clipboard-write',
-            },
-            state: 'granted',
-          }
-        );
+        console.log(`[BrowserService] Granting permissions to ${origin}...`);
+        browser.setPermission(origin, {
+          permission: {
+            name: 'clipboard-read',
+          },
+          state: 'granted',
+        });
+
+        browser.setPermission(origin, {
+          permission: {
+            name: 'clipboard-write',
+          },
+          state: 'granted',
+        })
 
       } catch (e) {
         console.warn('[BrowserService] Warning: Failed to override permissions (this is common in some headless environments):', e);
@@ -130,12 +133,12 @@ export class BrowserService {
       '--disable-notifications',
       '--disable-blink-features=AutomationControlled',
       '--ignore-certificate-errors',
-      '--use-gl=swiftshader', 
+      '--use-gl=swiftshader',
       '--disable-dev-shm-usage',
-      '--disable-gpu', 
+      '--disable-gpu',
       '--lang=en-US,en;q=0.9',
       // Added Clipboard feature flags
-      '--enable-features=Clipboard', 
+      '--enable-features=Clipboard',
       '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
     ];
 
@@ -152,7 +155,7 @@ export class BrowserService {
         ...args
       ], {
         detached: true,
-        stdio: 'ignore' 
+        stdio: 'ignore'
       });
       this.browserProcess.unref();
     }
@@ -184,22 +187,22 @@ export class BrowserService {
       if (SCRAPER_CONFIG.WEB_URL) {
         const targetUrl = new URL(SCRAPER_CONFIG.WEB_URL);
         const domainOrigin = targetUrl.origin;
-        
+
         console.log(`[BrowserService] Setting domain context at ${domainOrigin}...`);
         try {
-            await page.goto(domainOrigin, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.goto(domainOrigin, { waitUntil: 'domcontentloaded', timeout: 30000 });
         } catch (e) {
-            console.log("Context navigation timeout (ignoring)...");
+          console.log("Context navigation timeout (ignoring)...");
         }
 
         console.log('[BrowserService] Injecting storage & cookies...');
         await this.sessionManager.importSession(page, sessionName);
-        
-        await new Promise(r => setTimeout(r, 3000)); 
-        
+
+        await new Promise(r => setTimeout(r, 3000));
+
         console.log(`[BrowserService] Navigating to target: ${SCRAPER_CONFIG.WEB_URL}`);
         await page.goto(SCRAPER_CONFIG.WEB_URL, { waitUntil: 'networkidle2', timeout: 60000 });
-        
+
         const debugPath = path.join(process.cwd(), 'debug_login_status.png');
         await page.screenshot({ path: debugPath });
         console.log(`✅ Session injected. Screenshot saved to: ${debugPath}`);
@@ -214,10 +217,10 @@ export class BrowserService {
     if (this.browserProcess && this.browserProcess.pid) {
       console.log('Stopping browser process group...');
       try {
-        process.kill(-this.browserProcess.pid); 
+        process.kill(-this.browserProcess.pid);
         this.browserProcess = null;
       } catch (e) {
-          console.error("Error killing process", e);
+        console.error("Error killing process", e);
       }
     }
   }
