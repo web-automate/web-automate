@@ -59,3 +59,4 @@ openapi-ts-error-*.log
 # apps/client/src/client/ (sesuaikan path openapi-ts Anda)
 
 packages/database/generated/
+apps/scraper/debug_login_status.png
