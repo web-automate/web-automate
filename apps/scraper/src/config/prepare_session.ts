@@ -40,7 +40,8 @@ async function prepareSession() {
     const executablePath = getChromePath();
     console.log(`Menggunakan Chrome: ${executablePath}`);
 
-    await browserService.launch();
+    const sessionName = `session-${env.AI_PROVIDER}`;
+    await browserService.launch(sessionName);
 
     const page = await browserService.getMainPage();
 
@@ -72,7 +73,6 @@ async function prepareSession() {
 
     await new Promise(r => setTimeout(r, 2000));
 
-    const sessionName = `session-${env.AI_PROVIDER}`;
     await browserService.sessionManager.exportSession(page, sessionName);
     
   } catch (error) {
