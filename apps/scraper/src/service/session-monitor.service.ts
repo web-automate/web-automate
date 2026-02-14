@@ -8,7 +8,7 @@ export class SessionMonitorService {
 
   public start() {
     console.log('🕒 Session Monitor Scheduler started (Check every 1 hour)');
-    
+    this.checkSessionValidity();
     cron.schedule('0 * * * *', async () => {
       await this.checkSessionValidity();
     });
