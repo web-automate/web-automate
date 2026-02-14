@@ -1,3 +1,4 @@
+import path from 'path';
 import { Page } from 'puppeteer-core';
 import { SCRAPER_CONFIG } from '../../lib/scraper.const';
 import { SessionMonitorService } from '../session-monitor.service';
@@ -22,6 +23,8 @@ export class TextScraper {
       }
       
       try {
+
+        await page.screenshot({ path: path.join(process.cwd(), 'debug_voice_btn.png') });
         console.info('[TextScraper] Waiting for generation to complete (Voice Button)...');
         await page.waitForSelector(SCRAPER_CONFIG.VOICE_BTN_SELECTOR, {
           visible: true,
