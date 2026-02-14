@@ -13,7 +13,6 @@ export class TextScraper {
     let page: Page;
 
     try {
-      // 1. Setup Chat Session
       try {
         console.info('[TextScraper] Setting up chat session...');
         page = await this.core.setupChatSession(prompt);
@@ -22,7 +21,6 @@ export class TextScraper {
         throw error;
       }
       
-      // 2. Wait for Generation Completion (Voice Button)
       try {
         console.info('[TextScraper] Waiting for generation to complete (Voice Button)...');
         await page.waitForSelector(SCRAPER_CONFIG.VOICE_BTN_SELECTOR, {
@@ -35,7 +33,6 @@ export class TextScraper {
         throw error;
       }
 
-      // 3. Wait for Copy Button availability
       try {
         console.info('[TextScraper] Waiting for Copy Button to be enabled...');
         await this.waitForCopyButton(page);
@@ -44,7 +41,6 @@ export class TextScraper {
         throw error;
       }
 
-      // 4. Find and Click Copy Button
       try {
         const copyButtons = await page.$$(SCRAPER_CONFIG.COPY_BTN_SELECTOR);
         const lastCopyBtn = copyButtons[copyButtons.length - 1];
@@ -56,52 +52,25 @@ export class TextScraper {
         console.info('[TextScraper] Clicking the last Copy Button...');
         await lastCopyBtn.click();
         
-        // Give browser time to write to internal clipboard
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 2000));
       } catch (error) {
         console.error('[TextScraper] Error finding or clicking Copy Button:', error);
         throw error;
       }
 
-      // 5. Read from Clipboard (Using Paste Workaround)
       try {
-        console.info('[TextScraper] Reading text via Paste workaround...');
+        console.info('[TextScraper] Reading text via navigator.clipboard...');
         
-        // --- FIX STARTS HERE ---
-        // Instead of navigator.clipboard.readText(), we paste into a dummy element
-        const responseText = await page.evaluate(async () => {
-          // 1. Create a textarea
-          const textarea = document.createElement('textarea');
-          document.body.appendChild(textarea);
-          textarea.value = '';
-          textarea.select();
-          textarea.focus();
-          
-          // 2. Return the element validation for the node script to proceed
-          return true;
+        const clipboardContent = await page.evaluate(async () => {
+          return await navigator.clipboard.readText();
         });
 
-        // 3. Perform Paste (Ctrl+V / Cmd+V)
-        const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
-        await page.keyboard.down(modifier);
-        await page.keyboard.press('V');
-        await page.keyboard.up(modifier);
-
-        // 4. Read value and cleanup
-        const pastedContent = await page.evaluate(() => {
-          const textarea = document.querySelector('textarea');
-          const content = textarea?.value || '';
-          textarea?.remove();
-          return content;
-        });
-        // --- FIX ENDS HERE ---
-
-        if (!pastedContent) {
-          throw new Error('Clipboard is empty or access denied (Paste yielded empty string)');
+        if (!clipboardContent) {
+          throw new Error('Clipboard is empty after reading');
         }
 
-        console.info(`[TextScraper] Successfully extracted text (${pastedContent.length} chars).`);
-        return pastedContent;
+        console.info(`[TextScraper] Successfully extracted text (${clipboardContent.length} chars).`);
+        return clipboardContent;
 
       } catch (error) {
         console.error('[TextScraper] Error reading clipboard contents:', error);
@@ -109,7 +78,6 @@ export class TextScraper {
       }
 
     } catch (error) {
-      // Global Error Handler for Text Generation
       console.error('[TextScraper] CRITICAL ERROR in generate flow. Triggering session validation.', error);
       try {
         this.sessionMonitor.validateNow();
