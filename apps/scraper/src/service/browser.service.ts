@@ -174,7 +174,18 @@ export class BrowserService {
       const origin = new URL(SCRAPER_CONFIG.WEB_URL).origin;
       const context = this.browserInstance!.defaultBrowserContext();
       console.log(`[BrowserService] Granting permissions to ${origin}...`);
-      await context.overridePermissions(origin, ['clipboard-read', 'clipboard-write']);
+      await context.setPermission(origin, {
+        permission: {
+          name: 'clipboard-read',
+        },
+        state: 'granted',
+      });
+      await context.setPermission(origin, {
+        permission: {
+          name: 'clipboard-write',
+        },
+        state: 'granted',
+      });
     }
 
     // Stealth Tweaks
