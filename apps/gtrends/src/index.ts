@@ -3,12 +3,16 @@ import Redis from 'ioredis';
 import cron from 'node-cron';
 import Parser from 'rss-parser';
 
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const app = express();
 const port = 3003;
 
-const REDIS_HOST = 'localhost';
-const REDIS_PORT = 6377;
-const CACHE_TTL = 60 * 60 * 25;
+const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6377', 10);
+const CACHE_TTL = parseInt(process.env.CACHE_TTL || '604800', 10);
 const ACTIVE_GEOS_KEY = 'gtrends:registered_geos';
 
 const redis = new Redis({
