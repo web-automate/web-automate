@@ -16,6 +16,7 @@ const PROVIDERS = {
     VIOLATION_KEYWORDS: ["I can't create", "policy", "harmful", "unsafe", "election"],
     EXPIRED_MODAL_SELECTOR: '[data-testid="modal-expired-session"]',
     MULTIGEN_SELECTOR: 'div[data-testid="image-paragen-multigen"]',
+    NO_AUTH_LOGIN_MODAL_SELECTOR: 'div[data-testid="modal-no-auth-login"]',
   },
   chatgpt: {
     WEB_URL: 'https://chatgpt.com',
@@ -40,6 +41,7 @@ const PROVIDERS = {
     ],
     EXPIRED_MODAL_SELECTOR: '[data-testid="modal-expired-session"]',
     MULTIGEN_SELECTOR: 'div[data-testid="image-paragen-multigen"]',
+    NO_AUTH_LOGIN_MODAL_SELECTOR: 'div[data-testid="modal-no-auth-login"]',
   }
 };
 
