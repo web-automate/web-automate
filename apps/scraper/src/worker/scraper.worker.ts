@@ -244,6 +244,7 @@ async function handleDownloadFileS3(s3SignedUrl: string): Promise<string> {
 
 async function sendWebhook(url: string, payload: any, withImage: boolean = false, imageBuffer?: Buffer) {
   console.log(`[Webhook] Sending result to: ${url}`);
+  console.log(`[Webhook] Payload: ${JSON.stringify(payload)}`);
   try {
     if (withImage && imageBuffer) {
       const form = new FormData();
