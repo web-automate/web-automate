@@ -20,11 +20,25 @@ export class FileService {
   }
 
   static async writeArticles(contentDir: string, articles: WebsiteWithRelations['articles']) {
-    const tasks = articles.map((article) => {
+    const tasks = articles.map(async (article) => {
       const fileName = `${article.slug || article.id}.md`;
+      const category = article.category?.toLowerCase();
+      const subCategory = article.subCategory?.toLowerCase();
       const frontmatter = HugoTransformer.toFrontmatter(article);
       const fullContent = HugoTransformer.formatMarkdown(frontmatter, article.content);
-      return fs.writeFile(path.join(contentDir, fileName), fullContent);
+
+      let targetDir = contentDir;
+
+      if (category) {
+        targetDir = path.join(contentDir, category);
+        if (subCategory) {
+          targetDir = path.join(targetDir, subCategory);
+        }
+      }
+
+      await fs.mkdir(targetDir, { recursive: true });
+
+      return fs.writeFile(path.join(targetDir, fileName), fullContent);
     });
     return Promise.all(tasks);
   }
@@ -56,7 +70,7 @@ export class FileService {
   }
 
   static async writeMaintenanceFile(targetDir: string) {
-    console.log(`[FILE] Writing maintenance file to ${targetDir}`); 
+    console.log(`[FILE] Writing maintenance file to ${targetDir}`);
     const maintenanceFilePath = path.join(targetDir, ".maintenance");
     await fs.writeFile(maintenanceFilePath, "");
   }
