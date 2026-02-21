@@ -5,27 +5,28 @@ import { ImageRequest } from "../schema/image";
 import { imagePlaceholder, imagePromptGenerator } from "../tone";
 
 export const promptContent = (artData: ArticleRequest, toneGuideline: string) => `
-  Generate a detailed article based on the following specifications:
+Write a comprehensive, long-form article about "${artData.topic}". 
 
-  TASK SPECIFICATION:
-  - Topic: ${artData.topic}
-  - Keywords: ${artData.keywords?.join(', ') || 'None'}
-  - Category: ${artData.category || 'General'}
-  
-  TONE & STYLE GUIDELINES:
-  ${toneGuideline}
+### CORE CONTENT PARAMETERS
+- Topic: ${artData.topic}
+- Keywords to Integrate: ${artData.keywords?.join(', ') || 'None'}
+- Category: ${artData.category || 'General'}
+- Tone Requirement: ${toneGuideline}
 
-  VISUAL ASSETS CONFIGURATION:
-  - Total Images Requested: ${artData.imageCount || 0}
-  ${(artData.imageCount || 0) > 0
-        ? `
-  ${imagePlaceholder.replace('{{IMAGE_COUNT}}', (artData.imageCount || 0).toString())}
-  ${imagePromptGenerator}
-    `.trim()
-        : 'No images or placeholders required for this article.'}
+### STRUCTURAL CONSTRAINTS (MANDATORY)
+1. **Paragraph Density:** Every paragraph must be substantial, containing a minimum of 400 characters. Avoid brief, choppy sentences; instead, develop complex ideas and detailed explanations to ensure depth.
+2. **Heading Flow:** Never place a subheading immediately after a primary heading. You must provide at least one full paragraph of context or introduction following every heading before moving into a sub-section.
+3. **List Limitation:** To maintain a sophisticated narrative flow, you are permitted a maximum of only two bulleted or numbered lists in the entire article. Use standard prose for all other points.
 
-  CRITICAL INSTRUCTION:
-  Ensure the transition between the article body and the JSON image prompts is seamless using the specified delimiters.
+### VISUAL ASSETS & DATA
+${(artData.imageCount || 0) > 0
+    ? `Required Images: ${artData.imageCount}
+${imagePlaceholder.replace('{{IMAGE_COUNT}}', (artData.imageCount || 0).toString())}
+${imagePromptGenerator}`
+    : 'No images or placeholders required.'}
+
+### FINAL OUTPUT INSTRUCTION
+Ensure a seamless transition between the narrative body and the JSON image prompts. Use the specified delimiters strictly. The article must feel like a continuous, expert-level deep dive rather than a quick summary.'
 `.trim();
 
 export const promptImage = (imgData: ImageRequest, toneGuideline: string) => `
