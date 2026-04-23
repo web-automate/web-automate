@@ -1,3 +1,3 @@
-[submodule "apps/scraper/data/sessions"]
-	path = apps/scraper/data/sessions
-	url = git@github.com:web-automate/scraper-session.git
+[submodule "apps/scraper"]
+	path = apps/scraper
+	url = git@github.com:misbakhul29/scraper-golang.git
